@@ -6,6 +6,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <algorithm>
 
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>

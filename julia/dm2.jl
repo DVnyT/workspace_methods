@@ -20,14 +20,14 @@ let
     
     nsweeps = 5
     maxdim = [10, 20, 100, 200, 1000]
-    cutoff = 1E-12
+    cutoff = 1E-10
     
     psi0_i = random_mps(sites; linkdims = 10)
     energy0, psi0 = dmrg(H, psi0_i; nsweeps, maxdim, cutoff)
     @show(energy0)
     @show(inner(psi0', H, psi0))
     psi1_i = random_mps(sites; linkdims = 10)
-    energy1, psi1 = dmrg(H, [psi0], psi1_i; nsweeps,maxdim,cutoff)
+    energy1, psi1 = dmrg(H, [psi0], psi1_i; nsweeps, maxdim, cutoff)
     @show(energy1)
     @show(inner(psi1', H, psi1))   
 end 
