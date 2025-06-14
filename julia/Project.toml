@@ -1,7 +1,6 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 ITensorGLMakie = "3f718f31-6db8-4f43-a433-67cb5c73363e"
 ITensorGaussianMPS = "2be41995-7c9f-4653-b682-bfa4e7cebb93"
 ITensorMPS = "0d1a4710-d33b-49a5-8f18-73bdf49b47e2"
