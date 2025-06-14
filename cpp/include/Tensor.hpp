@@ -9,15 +9,16 @@
 
 class Tensor 
 {
-	std::vector<uintptr_t> m_modes;
-	std::vector<int64_t> m_extents;	
-	size_t m_rank;
+	std::vector<uintptr_t> m_modes;					// an ordered set of Index hashes (= addresses)
+	std::vector<int64_t> m_extents;					// dimensions of those indices
+	
+	size_t m_order{0};						// size(m_modes)
+	size_t m_elements{1};						// total coefficients of the tensor	
+ 	size_t m_byteSize{0};						// total number of bytes to store m_element
 
-	size_t m_elements{1};
-	size_t m_size{0};
- 
-	float* m_pHost{nullptr};
-	void* m_pDevice{nullptr};
+
+	float* m_pHost{nullptr};					// pointer to the host (you!)
+	void* m_pDevice{nullptr};					// pointer to the device (GPU)
 
 	public:
 	Tensor() = default;
