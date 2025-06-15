@@ -183,11 +183,9 @@ int main() {
 
   cutensorOperationDescriptor_t desc;
   HANDLE_ERROR(cutensorCreateContraction(
-      handle, &desc, descA, modeA.data(),
-      /* unary operator A*/ CUTENSOR_OP_IDENTITY, descB, modeB.data(),
-      /* unary operator B*/ CUTENSOR_OP_IDENTITY, descC, modeC.data(),
-      /* unary operator C*/ CUTENSOR_OP_IDENTITY, descC, modeC.data(),
-      descCompute));
+      handle, &desc, descA, modeA.data(), CUTENSOR_OP_IDENTITY, descB,
+      modeB.data(), CUTENSOR_OP_IDENTITY, descC, modeC.data(),
+      CUTENSOR_OP_IDENTITY, descC, modeC.data(), descCompute));
 
   /*****************************
    * Optional (but recommended): ensure that the scalar type is correct.

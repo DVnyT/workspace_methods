@@ -1,0 +1,930 @@
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXX WARNING: benchmark results are set to be written to disk, may overwrite previous results
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+Using Julia v1.11.5
+
+Using ITensors.jl v0.1.37
+
+Using C++ ITensor v3.1.6
+
+Julia is using BLAS vendor lbt. Please double check this is the same as the one you compile C++ ITensor against.
+Using [4, 8] BLAS threads
+
+Benchmarking ["dmrg_1d_qns", "dmrg_2d_qns", "dmrg_2d_conserve_ky"]
+
+Bond dimensions set to:
+Dict{String, StepRange{Int64, Int64}} with 6 entries:
+  "dmrg_2d_conserve_ky" => 1000:1000:10000
+  "trg" => 10:10:50
+  "dmrg_1d" => 200:200:1000
+  "dmrg_1d_qns" => 200:200:1000
+  "ctmrg" => 50:50:500
+  "dmrg_2d_qns" => 1000:1000:5000
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+Running benchmark dmrg_1d_qns for bond dimensions 200:200:1000, BLAS threads [4, 8], and block sparse threads 1
+
+DMRG, 1D S=1 Heisenberg model
+N = 100, 5 sweeps
+Conserve total spin projection symmetry
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 200, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 200, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.276
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.921
+After sweep 3 energy=-138.940084318427 maxlinkdim=100 maxerr=3.39E-11 time=1.634
+After sweep 4 energy=-138.940086128212 maxlinkdim=200 maxerr=6.09E-14 time=5.900
+After sweep 5 energy=-138.940086143087 maxlinkdim=200 maxerr=1.76E-13 time=7.468
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.94008614308726
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 200
+Total runtime = 16.7099353 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 200, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 200, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.262
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.824
+After sweep 3 energy=-138.940084318426 maxlinkdim=100 maxerr=3.39E-11 time=1.461
+After sweep 4 energy=-138.940086128211 maxlinkdim=200 maxerr=6.09E-14 time=5.515
+After sweep 5 energy=-138.940086143088 maxlinkdim=200 maxerr=1.76E-13 time=6.907
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.94008614308774
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 200
+Total runtime = 15.0185068 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 400, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 400, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.269
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.833
+After sweep 3 energy=-138.940084318427 maxlinkdim=100 maxerr=3.39E-11 time=1.717
+After sweep 4 energy=-138.940086119797 maxlinkdim=400 maxerr=1.00E-16 time=12.098
+After sweep 5 energy=-138.940086140311 maxlinkdim=400 maxerr=1.90E-16 time=23.998
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.9400861403107
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 400
+Total runtime = 38.9651954 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 400, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 400, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.284
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.941
+After sweep 3 energy=-138.940084318426 maxlinkdim=100 maxerr=3.39E-11 time=1.523
+After sweep 4 energy=-138.940086119797 maxlinkdim=400 maxerr=1.00E-16 time=14.072
+After sweep 5 energy=-138.940086140311 maxlinkdim=400 maxerr=1.90E-16 time=25.778
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.94008614031102
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 400
+Total runtime = 42.65002 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 600, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 600, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.257
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.856
+After sweep 3 energy=-138.940084318427 maxlinkdim=100 maxerr=3.39E-11 time=1.479
+After sweep 4 energy=-138.940086117753 maxlinkdim=600 maxerr=5.88E-19 time=17.325
+After sweep 5 energy=-138.940086139639 maxlinkdim=600 maxerr=6.20E-19 time=53.854
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.94008613963936
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 600
+Total runtime = 73.8287864 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 600, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 600, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.269
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.903
+After sweep 3 energy=-138.940084318426 maxlinkdim=100 maxerr=3.39E-11 time=1.833
+After sweep 4 energy=-138.940086117754 maxlinkdim=600 maxerr=5.88E-19 time=25.998
+After sweep 5 energy=-138.940086139640 maxlinkdim=600 maxerr=6.20E-19 time=63.369
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.94008613964036
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 600
+Total runtime = 92.4255478 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 800, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 800, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.242
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.821
+After sweep 3 energy=-138.940084318427 maxlinkdim=100 maxerr=3.39E-11 time=1.445
+After sweep 4 energy=-138.940086118859 maxlinkdim=800 maxerr=2.52E-21 time=21.809
+After sweep 5 energy=-138.940086139888 maxlinkdim=800 maxerr=6.75E-20 time=86.004
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.94008613988848
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 800
+Total runtime = 110.404984 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 800, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 800, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.313
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.912
+After sweep 3 energy=-138.940084318426 maxlinkdim=100 maxerr=3.39E-11 time=1.444
+After sweep 4 energy=-138.940086118859 maxlinkdim=800 maxerr=2.52E-21 time=21.919
+After sweep 5 energy=-138.940086139888 maxlinkdim=800 maxerr=6.75E-20 time=88.404
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.9400861398878
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 800
+Total runtime = 113.0600515 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 1000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 1000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.248
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.806
+After sweep 3 energy=-138.940084318427 maxlinkdim=100 maxerr=3.39E-11 time=1.433
+After sweep 4 energy=-138.940086119039 maxlinkdim=900 maxerr=0.00E+00 time=22.498
+After sweep 5 energy=-138.940086140048 maxlinkdim=1000 maxerr=1.66E-20 time=123.497
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.9400861400479
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 1000
+Total runtime = 148.5444924 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_1d_qns
+
+Maximum bond dimension set to 1000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_1d_qns for bond dimension 1000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-138.323936497127 maxlinkdim=9 maxerr=0.00E+00 time=0.293
+After sweep 2 energy=-138.937266523316 maxlinkdim=20 maxerr=3.83E-06 time=0.957
+After sweep 3 energy=-138.940084318426 maxlinkdim=100 maxerr=3.39E-11 time=1.648
+After sweep 4 energy=-138.940086119039 maxlinkdim=900 maxerr=0.00E+00 time=27.212
+After sweep 5 energy=-138.940086140047 maxlinkdim=1000 maxerr=1.66E-20 time=129.872
+nsweeps = 5
+N = 100
+cutoff = ITensors.cutoff
+energy = -138.94008614004727
+flux(ψ) = QN("Sz",0)
+
+
+Maximum dimension = 1000
+Total runtime = 160.032209 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+Running benchmark dmrg_2d_qns for bond dimensions 1000:1000:5000, BLAS threads [4, 8], and block sparse threads 1
+
+DMRG, 2D Hubbard model (U/t = 4)
+(Nx, Ny) = (8, 4), 10 sweeps
+Real space, periodic in the y-direction
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 1000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 1000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.764
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=16.174
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=34.338
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=41.118
+After sweep 5 energy=-26.646679076126 maxlinkdim=1000 maxerr=1.29E-04 time=61.887
+After sweep 6 energy=-26.647605743540 maxlinkdim=1000 maxerr=1.30E-04 time=72.299
+After sweep 7 energy=-26.647725775566 maxlinkdim=1000 maxerr=1.30E-04 time=68.191
+After sweep 8 energy=-26.647741960437 maxlinkdim=1000 maxerr=1.30E-04 time=69.058
+After sweep 9 energy=-26.647757668526 maxlinkdim=1000 maxerr=1.30E-04 time=67.874
+After sweep 10 energy=-26.647751647029 maxlinkdim=1000 maxerr=1.30E-04 time=68.558
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.64775164702913
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 1000
+Total runtime = 503.3807073 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 1000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 1000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.853
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=17.608
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=34.144
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=39.187
+After sweep 5 energy=-26.646679076126 maxlinkdim=1000 maxerr=1.29E-04 time=65.379
+After sweep 6 energy=-26.647605743540 maxlinkdim=1000 maxerr=1.30E-04 time=72.141
+After sweep 7 energy=-26.647725775566 maxlinkdim=1000 maxerr=1.30E-04 time=68.163
+After sweep 8 energy=-26.647741960437 maxlinkdim=1000 maxerr=1.30E-04 time=68.270
+After sweep 9 energy=-26.647757668526 maxlinkdim=1000 maxerr=1.30E-04 time=68.251
+After sweep 10 energy=-26.647751647029 maxlinkdim=1000 maxerr=1.30E-04 time=69.325
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.64775164702908
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 1000
+Total runtime = 506.3903073 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 2000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 2000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.871
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=17.549
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=34.584
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=40.680
+After sweep 5 energy=-26.667955264981 maxlinkdim=2000 maxerr=3.60E-05 time=148.724
+After sweep 6 energy=-26.668649762643 maxlinkdim=2000 maxerr=3.93E-05 time=204.838
+After sweep 7 energy=-26.668679937899 maxlinkdim=2000 maxerr=3.94E-05 time=199.683
+After sweep 8 energy=-26.668683069578 maxlinkdim=2000 maxerr=3.95E-05 time=199.692
+After sweep 9 energy=-26.668682693179 maxlinkdim=2000 maxerr=3.95E-05 time=205.560
+After sweep 10 energy=-26.668682077837 maxlinkdim=2000 maxerr=3.95E-05 time=224.606
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.668682077837264
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 2000
+Total runtime = 1279.8597822 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 2000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 2000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.801
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=16.153
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=34.514
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=40.305
+After sweep 5 energy=-26.667955264981 maxlinkdim=2000 maxerr=3.60E-05 time=155.277
+After sweep 6 energy=-26.668649762643 maxlinkdim=2000 maxerr=3.93E-05 time=218.096
+After sweep 7 energy=-26.668679937899 maxlinkdim=2000 maxerr=3.94E-05 time=210.229
+After sweep 8 energy=-26.668683069578 maxlinkdim=2000 maxerr=3.95E-05 time=236.381
+After sweep 9 energy=-26.668682693179 maxlinkdim=2000 maxerr=3.95E-05 time=226.028
+After sweep 10 energy=-26.668682077837 maxlinkdim=2000 maxerr=3.95E-05 time=209.023
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.668682077837328
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 2000
+Total runtime = 1349.8869298 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 3000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 3000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.814
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=16.424
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=36.438
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=40.447
+After sweep 5 energy=-26.667955264981 maxlinkdim=2000 maxerr=3.60E-05 time=163.835
+After sweep 6 energy=-26.673284886375 maxlinkdim=3000 maxerr=1.66E-05 time=400.614
+After sweep 7 energy=-26.673318527835 maxlinkdim=3000 maxerr=1.72E-05 time=449.307
+After sweep 8 energy=-26.673320172604 maxlinkdim=3000 maxerr=1.73E-05 time=435.087
+After sweep 9 energy=-26.673320895688 maxlinkdim=3000 maxerr=1.73E-05 time=457.113
+After sweep 10 energy=-26.673322354940 maxlinkdim=3000 maxerr=1.73E-05 time=480.552
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.673322354939952
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 3000
+Total runtime = 2483.8034513 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 3000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 3000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.896
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=16.312
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=33.579
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=47.388
+After sweep 5 energy=-26.667955264981 maxlinkdim=2000 maxerr=3.60E-05 time=171.016
+After sweep 6 energy=-26.673284886375 maxlinkdim=3000 maxerr=1.66E-05 time=350.813
+After sweep 7 energy=-26.673318527835 maxlinkdim=3000 maxerr=1.72E-05 time=405.315
+After sweep 8 energy=-26.673320172604 maxlinkdim=3000 maxerr=1.73E-05 time=405.346
+After sweep 9 energy=-26.673320895688 maxlinkdim=3000 maxerr=1.73E-05 time=404.549
+After sweep 10 energy=-26.673322354940 maxlinkdim=3000 maxerr=1.73E-05 time=405.697
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.67332235493997
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 3000
+Total runtime = 2244.0331231 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 4000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 4000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.797
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=16.114
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=31.759
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=39.227
+After sweep 5 energy=-26.667955264981 maxlinkdim=2000 maxerr=3.60E-05 time=147.301
+After sweep 6 energy=-26.673284886375 maxlinkdim=3000 maxerr=1.66E-05 time=341.569
+After sweep 7 energy=-26.674924295701 maxlinkdim=4000 maxerr=8.70E-06 time=627.523
+After sweep 8 energy=-26.674926907906 maxlinkdim=4000 maxerr=8.91E-06 time=713.808
+After sweep 9 energy=-26.674927383282 maxlinkdim=4000 maxerr=8.92E-06 time=712.421
+After sweep 10 energy=-26.674928101500 maxlinkdim=4000 maxerr=8.93E-06 time=758.182
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.674928101500342
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 4000
+Total runtime = 3391.9220439 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 4000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 4000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.975
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=16.397
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=30.485
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=39.261
+After sweep 5 energy=-26.667955264981 maxlinkdim=2000 maxerr=3.60E-05 time=159.443
+After sweep 6 energy=-26.673284886375 maxlinkdim=3000 maxerr=1.66E-05 time=354.423
+After sweep 7 energy=-26.674924295701 maxlinkdim=4000 maxerr=8.70E-06 time=659.000
+After sweep 8 energy=-26.674926907906 maxlinkdim=4000 maxerr=8.91E-06 time=744.963
+After sweep 9 energy=-26.674927383282 maxlinkdim=4000 maxerr=8.92E-06 time=727.898
+After sweep 10 energy=-26.674928101500 maxlinkdim=4000 maxerr=8.93E-06 time=714.347
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.67492810150035
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 4000
+Total runtime = 3450.6816706 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 5000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 5000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=3.832
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=16.085
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=30.651
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=38.216
+After sweep 5 energy=-26.667955264981 maxlinkdim=2000 maxerr=3.60E-05 time=151.140
+After sweep 6 energy=-26.673284886375 maxlinkdim=3000 maxerr=1.66E-05 time=347.440
+After sweep 7 energy=-26.675625234325 maxlinkdim=5000 maxerr=5.12E-06 time=1045.137
+After sweep 8 energy=-26.675629692661 maxlinkdim=5000 maxerr=5.37E-06 time=1259.550
+After sweep 9 energy=-26.675630523095 maxlinkdim=5000 maxerr=5.38E-06 time=1445.184
+After sweep 10 energy=-26.675630751342 maxlinkdim=5000 maxerr=5.38E-06 time=1431.440
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.675630751342045
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 5000
+Total runtime = 5769.2245387 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_qns
+
+Maximum bond dimension set to 5000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_qns for bond dimension 5000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-21.266810383325 maxlinkdim=100 maxerr=4.23E-04 time=4.167
+After sweep 2 energy=-26.224220304796 maxlinkdim=200 maxerr=5.83E-04 time=17.480
+After sweep 3 energy=-26.542874741151 maxlinkdim=400 maxerr=2.95E-04 time=31.809
+After sweep 4 energy=-26.628280615612 maxlinkdim=800 maxerr=1.68E-04 time=38.818
+After sweep 5 energy=-26.667955264981 maxlinkdim=2000 maxerr=3.60E-05 time=180.608
+After sweep 6 energy=-26.673284886375 maxlinkdim=3000 maxerr=1.66E-05 time=376.901
+After sweep 7 energy=-26.675625234326 maxlinkdim=5000 maxerr=5.12E-06 time=968.960
+After sweep 8 energy=-26.675629692662 maxlinkdim=5000 maxerr=5.37E-06 time=1202.149
+After sweep 9 energy=-26.675630523095 maxlinkdim=5000 maxerr=5.38E-06 time=1217.855
+After sweep 10 energy=-26.675630751342 maxlinkdim=5000 maxerr=5.38E-06 time=1305.918
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.675630751342034
+flux(ψ) = QN(("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 5000
+Total runtime = 5345.2421012 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+Running benchmark dmrg_2d_conserve_ky for bond dimensions 1000:1000:10000, BLAS threads [4, 8], and block sparse threads 1
+
+DMRG, 2D Hubbard model (U/t = 4)
+(Nx, Ny) = (8, 4), 10 sweeps
+Hybrid real and momentum space
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 1000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 1000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=22.670
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=83.026
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=150.667
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=44.623
+After sweep 5 energy=-26.652728998172 maxlinkdim=1000 maxerr=7.92E-05 time=58.061
+After sweep 6 energy=-26.653134998851 maxlinkdim=1000 maxerr=8.26E-05 time=66.337
+After sweep 7 energy=-26.653209592748 maxlinkdim=1000 maxerr=8.37E-05 time=66.602
+After sweep 8 energy=-26.653274622422 maxlinkdim=1000 maxerr=8.40E-05 time=67.038
+After sweep 9 energy=-26.653287213574 maxlinkdim=1000 maxerr=8.40E-05 time=67.815
+After sweep 10 energy=-26.653291115418 maxlinkdim=1000 maxerr=8.42E-05 time=67.467
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.653291115417893
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 1000
+Total runtime = 694.4664839 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 1000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 1000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=23.520
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=86.165
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=156.213
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=50.768
+After sweep 5 energy=-26.652728998172 maxlinkdim=1000 maxerr=7.92E-05 time=63.409
+After sweep 6 energy=-26.653134998851 maxlinkdim=1000 maxerr=8.26E-05 time=66.694
+After sweep 7 energy=-26.653209592748 maxlinkdim=1000 maxerr=8.37E-05 time=67.263
+After sweep 8 energy=-26.653274622422 maxlinkdim=1000 maxerr=8.40E-05 time=68.001
+After sweep 9 energy=-26.653287213575 maxlinkdim=1000 maxerr=8.40E-05 time=67.876
+After sweep 10 energy=-26.653291115418 maxlinkdim=1000 maxerr=8.42E-05 time=66.912
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.65329111541788
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 1000
+Total runtime = 716.9666031 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 2000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 2000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=23.473
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=86.236
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=156.994
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=49.699
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=99.739
+After sweep 6 energy=-26.670497635595 maxlinkdim=2000 maxerr=2.87E-05 time=122.183
+After sweep 7 energy=-26.670503029314 maxlinkdim=2000 maxerr=2.91E-05 time=120.912
+After sweep 8 energy=-26.670503928728 maxlinkdim=2000 maxerr=2.92E-05 time=123.626
+After sweep 9 energy=-26.670504476177 maxlinkdim=2000 maxerr=2.92E-05 time=124.434
+After sweep 10 energy=-26.670504618653 maxlinkdim=2000 maxerr=2.92E-05 time=125.635
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.670504618652892
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 2000
+Total runtime = 1033.0902527 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 2000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 2000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=22.794
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=87.110
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=160.972
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=50.809
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=102.476
+After sweep 6 energy=-26.670497635595 maxlinkdim=2000 maxerr=2.87E-05 time=125.992
+After sweep 7 energy=-26.670503029314 maxlinkdim=2000 maxerr=2.91E-05 time=131.924
+After sweep 8 energy=-26.670503928728 maxlinkdim=2000 maxerr=2.92E-05 time=126.786
+After sweep 9 energy=-26.670504476177 maxlinkdim=2000 maxerr=2.92E-05 time=123.849
+After sweep 10 energy=-26.670504618653 maxlinkdim=2000 maxerr=2.92E-05 time=128.139
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.67050461865287
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 2000
+Total runtime = 1061.0022537 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 3000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 3000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=22.648
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=86.444
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=162.540
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=55.179
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=106.981
+After sweep 6 energy=-26.674077904856 maxlinkdim=3000 maxerr=1.23E-05 time=179.931
+After sweep 7 energy=-26.674096110830 maxlinkdim=3000 maxerr=1.32E-05 time=194.801
+After sweep 8 energy=-26.674096976442 maxlinkdim=3000 maxerr=1.32E-05 time=189.968
+After sweep 9 energy=-26.674097232539 maxlinkdim=3000 maxerr=1.33E-05 time=192.762
+After sweep 10 energy=-26.674097578059 maxlinkdim=3000 maxerr=1.33E-05 time=194.780
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.674097578059204
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 3000
+Total runtime = 1386.1819528 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 3000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 3000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=22.771
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=83.153
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=158.817
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=52.462
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=103.698
+After sweep 6 energy=-26.674077904856 maxlinkdim=3000 maxerr=1.23E-05 time=177.708
+After sweep 7 energy=-26.674096110830 maxlinkdim=3000 maxerr=1.32E-05 time=201.426
+After sweep 8 energy=-26.674096976442 maxlinkdim=3000 maxerr=1.32E-05 time=204.350
+After sweep 9 energy=-26.674097232539 maxlinkdim=3000 maxerr=1.33E-05 time=205.024
+After sweep 10 energy=-26.674097578059 maxlinkdim=3000 maxerr=1.33E-05 time=206.891
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.674097578059175
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 3000
+Total runtime = 1416.4693491 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 4000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 4000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=23.275
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=86.372
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=163.604
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=56.648
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=112.842
+After sweep 6 energy=-26.675324107821 maxlinkdim=4000 maxerr=6.67E-06 time=273.868
+After sweep 7 energy=-26.675356365271 maxlinkdim=4000 maxerr=7.24E-06 time=306.621
+After sweep 8 energy=-26.675353201803 maxlinkdim=4000 maxerr=7.43E-06 time=292.964
+After sweep 9 energy=-26.675353583872 maxlinkdim=4000 maxerr=7.41E-06 time=291.406
+After sweep 10 energy=-26.675353370034 maxlinkdim=4000 maxerr=7.41E-06 time=289.549
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.675353370034237
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 4000
+Total runtime = 1897.3623014 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 4000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 4000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=22.664
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=83.539
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=158.195
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=51.014
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=100.880
+After sweep 6 energy=-26.675324107821 maxlinkdim=4000 maxerr=6.67E-06 time=242.723
+After sweep 7 energy=-26.675356365271 maxlinkdim=4000 maxerr=7.24E-06 time=323.824
+After sweep 8 energy=-26.675353201803 maxlinkdim=4000 maxerr=7.43E-06 time=291.396
+After sweep 9 energy=-26.675353583872 maxlinkdim=4000 maxerr=7.41E-06 time=292.617
+After sweep 10 energy=-26.675353370034 maxlinkdim=4000 maxerr=7.41E-06 time=292.511
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.67535337003418
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 4000
+Total runtime = 1859.5208937 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 5000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 5000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=22.637
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=83.032
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=154.979
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=50.910
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=101.659
+After sweep 6 energy=-26.675856920862 maxlinkdim=5000 maxerr=3.95E-06 time=302.522
+After sweep 7 energy=-26.675887048188 maxlinkdim=5000 maxerr=4.40E-06 time=386.745
+After sweep 8 energy=-26.675887250886 maxlinkdim=5000 maxerr=4.42E-06 time=399.151
+After sweep 9 energy=-26.675887279370 maxlinkdim=5000 maxerr=4.43E-06 time=404.893
+After sweep 10 energy=-26.675887168714 maxlinkdim=5000 maxerr=4.43E-06 time=410.263
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.67588716871431
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 5000
+Total runtime = 2316.951682 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 5000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 5000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=22.878
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=83.104
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=153.637
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=52.716
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=102.771
+After sweep 6 energy=-26.675856920862 maxlinkdim=5000 maxerr=3.95E-06 time=310.719
+After sweep 7 energy=-26.675887048188 maxlinkdim=5000 maxerr=4.40E-06 time=403.304
+After sweep 8 energy=-26.675887250886 maxlinkdim=5000 maxerr=4.42E-06 time=402.180
+After sweep 9 energy=-26.675887279370 maxlinkdim=5000 maxerr=4.43E-06 time=396.986
+After sweep 10 energy=-26.675887168714 maxlinkdim=5000 maxerr=4.43E-06 time=399.456
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.67588716871434
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 5000
+Total runtime = 2327.9009483 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 6000, BLAS threads set to 4, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 6000, 4 BLAS threads, 1 block sparse threads, and splitblocks true.
+
+After sweep 1 energy=-12.380869458826 maxlinkdim=100 maxerr=3.13E-03 time=22.670
+After sweep 2 energy=-25.394803926564 maxlinkdim=200 maxerr=7.62E-04 time=83.854
+After sweep 3 energy=-26.533971431020 maxlinkdim=400 maxerr=2.22E-04 time=152.953
+After sweep 4 energy=-26.639519887403 maxlinkdim=800 maxerr=1.04E-04 time=51.967
+After sweep 5 energy=-26.670067440959 maxlinkdim=2000 maxerr=2.37E-05 time=102.059
+After sweep 6 energy=-26.676125069001 maxlinkdim=6000 maxerr=2.43E-06 time=371.810
+After sweep 7 energy=-26.676154096209 maxlinkdim=6000 maxerr=2.81E-06 time=501.122
+After sweep 8 energy=-26.676154385319 maxlinkdim=6000 maxerr=2.83E-06 time=478.689
+After sweep 9 energy=-26.676154229972 maxlinkdim=6000 maxerr=2.83E-06 time=465.472
+After sweep 10 energy=-26.676154343499 maxlinkdim=6000 maxerr=2.83E-06 time=462.709
+nsweeps = 10
+(Nx, Ny) = (8, 4)
+(U, t) = (4.0, 1.0)
+cutoff = 0.0
+energy = -26.676154343498908
+flux(ψ) = QN(("Ky",0,4),("Nf",32,-1),("Sz",0))
+
+
+Maximum dimension = 6000
+Total runtime = 2693.4784923 seconds
+
+Writing results to C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\data\julia\run.txt
+
+Benchmark located in path C:\Users\wizzi\Documents\On Academia\[cond-matt] Condensed Matter Physics\[cond-matt] Methods\workspace_methods\julia\ITensorBenchmarks\src\bench_dmrg_2d_conserve_ky
+
+Maximum bond dimension set to 6000, BLAS threads set to 8, block sparse threads set to 1, and splitblocks is set to true.
+
+######################################################################
+Run Julia benchmark dmrg_2d_conserve_ky for bond dimension 6000, 8 BLAS threads, 1 block sparse threads, and splitblocks true.
+
