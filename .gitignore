@@ -3,4 +3,7 @@ __pycache__/
 *.pyc
 bin/
 build/
-
+/julia/ITensorBenchmarks
+/cpp/cublas_samples
+/cpp/cusolver_samples
+/cpp/cutensor_samples
