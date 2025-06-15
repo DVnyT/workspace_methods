@@ -1,6 +1,9 @@
 #pragma once
 
 #include "../include/Tensor.hpp"
+#include "../include/Index.hpp"
+#include "../include/utils.hpp"
+
 #include <cstdint>
 
 Tensor::Tensor() = default; 
@@ -63,23 +66,25 @@ Tensor::Tensor(const std::vector<uintptr_t>& modes, const std::vector<int64_t>& 
 Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutensorHandle_t& globalHandle)
 {
 	/* 
-	 *	Step 1: Describe the tensors in a suitable format 
+	 *	The contraction boilerplate is broken down into 3 major steps
+	 *
+	 * 	Step 1: Describe the tensors in a suitable format 
 	*/
 
 	cutensorTensorDescriptor_t descA;				// Allocated tensor descriptor for A
 	cutensorTensorDescriptor_t descB;
-
+	
 	// TODO: Create a lookup table to initialize indices left in the output Tensor C
 	std::map<uintptr_t, int64_t> lookupC;
-
-	Tensor::Tensor C(&lookupC);					// Output Tensor
+	lookupC = getUniqueIndices(&A, &B);				// See utils.cpp for definition
+	Tensor C(&lookupC);						// Output Tensor
 	
 	const uint32_t kAlignment = 128;  				// TODO: Do make this a global variable!
 		
 	cutensorCreateTensorDescriptor_t(globalHandle,			
 				  &descA,				
-				  A.m_order,
-				  A.m_extents.data(),		
+				  A.getOrder(),
+				  A.getExtents(),		
 				  NULL,					// Stride (refer below!)		
 				  CUTENSOR_R_32F,			// Datatype: 32-bit Real Floats
 				  kAlignment);
@@ -92,16 +97,16 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 
 	cutensorCreateTensorDescriptor_t(globalHandle,
 				  &descB,
-				  B.m_order,
-				  B.m_extents.data(),
+				  B.getOrder(),
+				  B.getExtents(),
 				  NULL,
 				  CUTENSOR_R_32F,
 				  kAlignment);
 	
 	cutensorCreateTensorDescriptor_t(globalHandle,			// Output Tensor C for a simple contraction
-				  &descC
-				  C.m_order,
-				  C.m_extents.data(),
+				  &descC,
+				  C.getOrder(),
+				  C.getExtents(),
 				  NULL,
 				  CUTENSOR_R_32F,
 				  kAlignment);			
@@ -115,7 +120,7 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 	*		D_modesD = alpha * opA(A_modesA) * opB(B_modesB) + beta * opC(C_modesC)
 	*	
 	*	For our two-tensor contraction, we set beta to 0, and reuse our Tensor Descriptor for C, as the
-	*	output Tensor D. Note that modes_D are equivalent to modes_C.
+	*	output Tensor D. Note that modes_D ≡ modes_C ≡ modes_(A * B).
 	*	
 	*	opA() does an operation on all elements of A, we currently use the identity operation.
 	*/
@@ -125,10 +130,10 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 
 	cutensorCreateContraction(globalHandle,
 			   &descOp,
-			   descA, A.m_modes.data(), CUTENSOR_OP_IDENTITY,	// descA, A.m_modes, opA
-			   descB, B.m_modes.data(), CUTENSOR_OP_IDENTITY,
-			   descC, C.m_modes.data(), CUTENSOR_OP_IDENTITY,
-			   descC, C.m_modes.data(),
+			   descA, A.getModes(), CUTENSOR_OP_IDENTITY,	// descA, A.m_modes, opA
+			   descB, B.getModes(), CUTENSOR_OP_IDENTITY,
+			   descC, C.getModes(), CUTENSOR_OP_IDENTITY,
+			   descC, C.getModes(),				// Output to C	
 			   descCompute);
 	
   	typedef float floatTypeCompute;
@@ -137,23 +142,23 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 
 	cutensorPlan_t plan;
 	cutensorPlanPreference_t planPref;					
-	// plan holds the work to be done, in this case a contraction, along with parameters we tune now
+	// plan holds the work to be done, in this case a contraction, along with all the parameters we tune now
 	// planPref narrows the choices of algorithms/variants/kernels to use
   	
 	const cutensorAlgo_t algo = chooseContractionAlgo();			// default is CUTENSOR_ALGO_DEFAULT
 	
 	cutensorCreatePlanPreference(globalHandle, 
-				&planPref, 
+				&planPref, 					// mode and algo go into planPref
 				algo,
-				CUTENSOR_JIT_MODE_NONE));			// Not using Just-In-Time compilation
+				CUTENSOR_JIT_MODE_NONE);			// Not using Just-In-Time compilation
 
-	uint64_t workspaceSizeEstimate{0};
+	uint64_t workspaceSizeEstimate{0};					// outputs estimated size to this
   	const cutensorWorksizePreference_t workspacePref = CUTENSOR_WORKSPACE_DEFAULT;
 	cutensorEstimateWorkspaceSize(globalHandle,
 			       &descOp,
 			       planPref,
 			       workspacePref,
-			       &workspaceSizeEstimate);
+			       &workspaceSizeEstimate);			
 
 	cutensorCreatePlan(globalHandle,
 		    &plan,
@@ -168,14 +173,14 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
                 &actualWorkspaceSize,
                 sizeof(actualWorkspaceSize));
 
-    assert(actualWorkspaceSize <= workspaceSizeEstimate);
+	assert(actualWorkspaceSize <= workspaceSizeEstimate);
 
-    void *work = nullptr;
-    if (actualWorkspaceSize > 0)
-    {
-        cudaMalloc(&work, actualWorkspaceSize);
-        assert(uintptr_t(work) % 128 == 0); // workspace must be aligned to 128 byte-boundary
-    }
+    	void *work = nullptr;
+    	if (actualWorkspaceSize > 0)
+    	{
+        	cudaMalloc(&work, actualWorkspaceSize);
+        	assert(uintptr_t(work) % 128 == 0); 		// workspace must be aligned to 128 byte-boundary
+    	}
 
 	/*
 	 *	Step 3: Actual execution
@@ -190,7 +195,7 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
   	
 	for (int i = 0; i < 3; ++i) 
 	{
-    		cudaMemcpy(C.Tensor::getm_pDevice(), C, C.Tensor::getm_byteSize(), cudaMemcpyHostToDevice);
+    		cudaMemcpy(C.getDevicePtr(), C, C.getByteSize(), cudaMemcpyHostToDevice);
     		cudaDeviceSynchronize();
 
     		GPUTimer timer;
@@ -198,27 +203,21 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 
     		cutensorContract(handle, 
 		       plan, 
-		       (void *)&alpha, A.Tensor::getm_pDevice(), B.Tensor::getm_pDevice(),
-		       (void *)&beta, C.Tensor::getm_pDevice(), C.Tensor::getm_pDevice(), 
+		       (void *)&alpha, A.getDevicePtr(), B.getDevicePtr(),
+		       (void *)&beta, C.getDevicePtr(), C.getDevicePtr(), 
 		       work, actualWorkspaceSize, stream);
 
     		auto time = timer.seconds();
     		minTimeCUTENSOR = (minTimeCUTENSOR < time) ? minTimeCUTENSOR : time;
   	}
 
-  
-
-  	double transferedBytes = C.get_mbyteSize() + A.get_mbyteSize() + B.get_mbyteSize();
-  	transferedBytes += ((float)beta != 0.f) ? sizeC : 0;
+  	double transferedBytes = C.getByteSize() + A.getByteSize() + B.getByteSize();
+  	transferedBytes += ((float)beta != 0.f) ? C.getByteSize() : 0;
   	transferedBytes /= 1e9;
 	
-  	printf("cuTensor: %.2f GFLOPs/s %.2f GB/s\n", 
-	  gflops / minTimeCUTENSOR,
-	  transferedBytes / minTimeCUTENSOR);
-
 	// TODO: Free memory!
 	
-	return C;
+	return C;	
 }
 
 
