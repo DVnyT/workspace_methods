@@ -1,4 +1,0 @@
-.*.swp
-*.o
-deps/itensor_v*
-src/.tmp_*
