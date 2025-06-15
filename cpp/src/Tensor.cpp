@@ -4,66 +4,150 @@
 #include "../include/Index.hpp"
 #include "../include/utils.hpp"
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
+// Constructors =>
 Tensor::Tensor() = default; 
 
 // DONE:  TODO: Move the logic outside the .hpp 
 
-Tensor::Tensor(const std::map<uintptr_t, int64_t>& lookup)	// lookup = {(key,value): (Index address, Index dim)}
+Tensor::Tensor(const std::vector<Index>& indices)
+: m_indices(indices), m_order(indices.size())
 {
-	m_order = lookup.size();				// i.e. number of Indices
-	
-	for (const auto& i: lookup)
+	m_modes.reserve(m_order);
+	m_extents.reserve(m_order);
+	for (size_t i = 0; i < m_order; ++i)
 	{
-		m_modes.push_back(i.first);
-		m_extents.push_back(i.second); 
-		m_elements *= i.second;
+		m_modes[i] = indices[i].getUniqueID();
+		m_extents[i] = indices[i].getDim();
+		m_elements *= m_extents[i];
+	}
+	m_byteSize = sizeof(floatType) * m_elements;
+	
+	if(m_byteSize != 0)
+	{
+		this -> setRand();				// setRand() also initializes m_pHost, m_pDevice
+	}
+}
+
+Tensor::Tensor(const std::map<size_t, int64_t>& lookup)		// lookup = {(key,value): (Index id, Index dim)}
+: m_indices({0}), m_order(lookup.size())
+{
+	m_modes.reserve(m_order);
+	m_extents.reserve(m_order);
+	for (const auto& [id, dim]: lookup)
+	{
+		m_modes.push_back(id);
+		m_extents.push_back(dim); 
+		m_elements *= dim;
+	}
+	m_byteSize = m_elements * sizeof(float);
+	
+	if (m_byteSize != 0) 
+	{
+		this -> setRand();
+	}
+}
+	
+Tensor::Tensor(const std::vector<size_t>& modes, const std::vector<int64_t>& extents)	// alternate ctor
+: m_modes(modes), m_extents(extents), m_order(modes.size())
+{
+	for (const auto& i : extents)
+	{
+		m_elements *= i;
 	}
 		
 	m_byteSize = m_elements * sizeof(float);
 	
 	if (m_byteSize != 0) 
 	{
-		m_pHost = (float*) malloc(m_byteSize);
-		cudaMalloc((void**)& m_pDevice, m_byteSize);
-		
-		for(int j = 0; j < m_elements; j++)		// populate the tensor
-		{
-			m_pHost[j] = ((float) rand())/RAND_MAX + 0.5;
-		}
-
-		cudaMemcpy(m_pDevice, m_pHost, m_byteSize, cudaMemcpyHostToDevice);		// copy tensor to GPU
+		this -> setRand();
 	}
 }
-	
-Tensor::Tensor(const std::vector<uintptr_t>& modes, const std::vector<int64_t>& extents)	// alternate const.
-: m_modes(modes), m_extents(extents)
+
+// Getters =>
+const std::vector<size_t>& Tensor::getModes() const {return this->m_modes;}
+const Tensor::std::vector<int64_t>& Tensor::getExtents() const {return this->m_extents;}
+size_t Tensor::getOrder() const	{return this->m_order;}
+size_t Tensor::getElements() const {return this->m_elements;}
+size_t Tensor::getByteSize() const {return this->m_byteSize;}
+float* Tensor::getHostPtr() const {return this->m_pHost;}
+void* Tensor::getDevicePtr() const {return this->m_pDevice;}	
+
+// Memory Management =>
+void Tensor::freeMemory()
 {
-	m_order = modes.size();
-	for (const auto& i : extents)
+	if(m_pHost)
 	{
-		m_elements *= i;
+		free(m_pHost);
+		m_pHost = nullptr;
 	}
-		
-	m_size = m_elements * sizeof(float);
-	if (m_size != 0) 
+	if(m_pDevice)
 	{
-		m_pHost = (float*) malloc(m_byteSize);
-		cudaMalloc((void**)& m_pDevice, m_byteSize);
-		
-		
-		for(int j = 0; j < m_elements; j++)
-		{
-			m_pHost[j] = ((float) rand())/RAND_MAX + 0.5;			// populate the tensor
-		}
-
-		cudaMemcpy(m_pDevice, m_pHost, m_byteSize, cudaMemcpyHostToDevice);
+		cudaFree(m_pDevice);
+		m_pDevice = nullptr;
 	}
-
 }
 
-Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutensorHandle_t& globalHandle)
+// Set values of the Tensor =>
+void Tensor::setZero()
+{
+	this->freeMemory();
+	m_pHost = (float*) malloc(m_byteSize);
+	cudaMalloc((void**)& m_pDevice, m_byteSize);
+		
+	for(size_t j = 0; j < m_elements; ++j)						// populate the tensor
+	{
+		m_pHost[j] = 0;
+	}
+
+	cudaMemcpy(m_pDevice, m_pHost, m_byteSize, cudaMemcpyHostToDevice);		// copy tensor to GPU
+}
+
+void Tensor::setOne()
+{	
+	this->freeMemory();
+	m_pHost = (float*) malloc(m_byteSize);
+	cudaMalloc((void**)& m_pDevice, m_byteSize);
+		
+	for(size_t j = 0; j < m_elements; ++j)						// populate the tensor
+	{
+		m_pHost[j] = 1;
+	}
+
+	cudaMemcpy(m_pDevice, m_pHost, m_byteSize, cudaMemcpyHostToDevice);		// copy tensor to GPU
+}
+
+void Tensor::setRand()
+{		
+	this->freeMemory();
+	m_pHost = (float*) malloc(m_byteSize);
+	cudaMalloc((void**)& m_pDevice, m_byteSize);
+		
+	for(size_t j = 0; j < m_elements; ++j)						// populate the tensor
+	{
+		m_pHost[j] = ((float) rand())/RAND_MAX;
+	}
+
+	cudaMemcpy(m_pDevice, m_pHost, m_byteSize, cudaMemcpyHostToDevice);		// copy tensor to GPU
+}
+
+// Tensor Operations =>
+void Tensor::reshape(const std::vector<Index::Index>& column_Indices, 
+		     const std::vector<Index::Index>& row_Indices)
+{
+
+}
+Tensor contractAB(const Tensor::Tensor& A, 
+		const Tensor::Tensor& B,  
+		std::vector<Index::Index>& toContract,
+		cutensorHandle_t& globalHandle)
 {
 	/* 
 	 *	The contraction boilerplate is broken down into 3 major steps
@@ -74,11 +158,12 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 	cutensorTensorDescriptor_t descA;				// Allocated tensor descriptor for A
 	cutensorTensorDescriptor_t descB;
 	
-	// TODO: Create a lookup table to initialize indices left in the output Tensor C
-	std::map<uintptr_t, int64_t> lookupC;
-	lookupC = getUniqueIndices(&A, &B);				// See utils.cpp for definition
-	Tensor C(&lookupC);						// Output Tensor
+	// DONE: TODO: Create a lookup table (IDs, dims) to initialize indices left in the output Tensor C
+	std::pair<std::vector<size_t>, std::vector<int64_t>> initC = getUniqueIndsAB(A, B);
 	
+	// C only needs its (IDs, dims) for our purposes, so this initialization will do
+	Tensor::Tensor C = new(Tensor::Tensor(initC.first, initC.second));
+
 	const uint32_t kAlignment = 128;  				// TODO: Do make this a global variable!
 		
 	cutensorCreateTensorDescriptor_t(globalHandle,			
@@ -103,6 +188,7 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 				  CUTENSOR_R_32F,
 				  kAlignment);
 	
+
 	cutensorCreateTensorDescriptor_t(globalHandle,			// Output Tensor C for a simple contraction
 				  &descC,
 				  C.getOrder(),
@@ -185,7 +271,6 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 	/*
 	 *	Step 3: Actual execution
 	 *
-	 *
 	 * */
 
 	cudaStream_t stream;
@@ -218,6 +303,54 @@ Tensor::Tensor Contract(const Tensor::Tensor& A, const Tensor::Tensor& B, cutens
 	// TODO: Free memory!
 	
 	return C;	
+}
+
+// Helper function to figure out the indices of C = A * B, 
+// returns a pair of vectors (modesC, extentsC) that we assign to (C.m_modes, C.m_extents) =>
+std::pair<std::vector<size_t>, std::vector<int64_t>> getUniqueInds_AB(const Tensor& A, const Tensor& B)
+{
+ 	// Builds a map of (A.modes, A.extents)
+	std::unordered_map<size_t,int64_t> mapA;
+	mapA.reserve(A.m_modes.size());
+	for (size_t i = 0; i < A.m_modes.size(); ++i) 
+	{
+        	mapA.emplace(A.m_modes[i], A.m_extents[i]);
+    	}
+
+	std::vector<std::pair<size_t,int64_t>> tmp;
+    	tmp.reserve(A.m_modes.size() + B.m_modes.size());
+
+    	// Adds those in B, not in A
+    	for (size_t j = 0; j < B.m_modes.size(); ++j) 
+	{
+        	size_t mode = B.m_modes[j];
+        	auto it = mapA.find(mode);
+        	if (it == mapA.end()) 
+		{
+            		tmp.emplace_back(mode, B.m_extents[j]);
+        	} 
+		else 
+		{
+            		// common IDs get erased
+            		mapA.erase(it);
+        	}
+    	}
+
+    	// Adds those in A, not in B (common IDs have already been erased)
+    	for (auto &p : mapA) {
+        	tmp.emplace_back(p.first, p.second);
+    	}
+
+	std::vector<size_t> modesC;
+    	std::vector<int64_t> extentsC;
+    	modesC.reserve(tmp.size());
+    	extentsC.reserve(tmp.size());
+    	for (auto &pr : tmp) {
+        	modesC.push_back(pr.first);
+        	extentsC.push_back(pr.second);
+    	}
+
+    	return { std::move(modesC), std::move(extentsC) };
 }
 
 
