@@ -2,27 +2,24 @@
 
 #include "../include/Index.hpp"
 
-// Globals =>
-std::atomic<size_t> Index::s_globalID{0};
-
 // Constructors =>
 Index::Index()
 : m_uniqueID(s_globalID.fetch_add(1, std::memory_order_relaxed))
 {}	
 
-Index::Index(const int& dim)
+Index::Index(int dim)
 : m_dim(dim), m_uniqueID(s_globalID.fetch_add(1, std::memory_order_relaxed))
 {}
 
-Index::Index(const int& dim, const std::vector<std::string>& tags)
+Index::Index(int dim, const std::vector<std::string>& tags)
 : m_dim(dim), m_tags(tags), m_uniqueID(s_globalID.fetch_add(1, std::memory_order_relaxed))
 {}
 
-Index::Index(const int& dim, const int& prime)
+Index::Index(int dim, int prime)
 : m_dim(dim), m_prime(prime), m_uniqueID(s_globalID.fetch_add(1, std::memory_order_relaxed))
 {}
 
-Index::Index(const int& dim, const std::vector<std::string>& tags, const int& prime)
+Index::Index(int dim, const std::vector<std::string>& tags, int prime)
 : m_dim(dim), m_tags(tags), m_prime(prime), m_uniqueID(s_globalID.fetch_add(1, std::memory_order_relaxed))
 {}
 
