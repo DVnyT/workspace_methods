@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cassert>
 #include <iterator>
 #include <tuple>
 #include <unordered_map>
@@ -44,10 +45,10 @@ Tensor::Tensor(const std::vector<Index>& indices)
 		this->setRand();
 	}
 	
-	cutensorCreateTensorDescriptor_t(globalHandle,			
+	cutensorCreateTensorDescriptor(globalHandle,			
 				  &(this->m_desc),				
 				  m_order,
-				  m_extents,		
+				  m_extents.data(),		
 				  NULL,					// Stride (refer below! line[196])		
 				  CUTENSOR_R_32F,			// Datatype: 32-bit Real Floats
 				  kAlignment);
@@ -55,7 +56,7 @@ Tensor::Tensor(const std::vector<Index>& indices)
 
 
 
-Tensor::Tensor(const std::map<size_t, int64_t>& lookup)		// lookup = {(key,value): (Index id, Index dim)}
+Tensor::Tensor(const std::map<int, int64_t>& lookup)		// lookup = {(key,value): (Index id, Index dim)}
 : m_indices({0}), m_order(lookup.size()), m_elements(1)
 {
 	m_modes.resize(m_order);
@@ -77,16 +78,16 @@ Tensor::Tensor(const std::map<size_t, int64_t>& lookup)		// lookup = {(key,value
 		this->setRand();			
 	}
 	
-	cutensorCreateTensorDescriptor_t(globalHandle,			
+	cutensorCreateTensorDescriptor(globalHandle,			
 				  &(this->m_desc),				
 				  m_order,
-				  m_extents,		
+				  m_extents.data(),		
 				  NULL,				
 				  CUTENSOR_R_32F,	
 				  kAlignment);
 }
 	
-Tensor::Tensor(const std::vector<size_t>& modes, const std::vector<int64_t>& extents)	// alternate ctor
+Tensor::Tensor(const std::vector<int>& modes, const std::vector<int64_t>& extents)	// alternate ctor
 : m_modes(modes), m_extents(extents), m_order(modes.size()), m_elements(1)
 {
 	for (const auto& i : extents)
@@ -104,10 +105,10 @@ Tensor::Tensor(const std::vector<size_t>& modes, const std::vector<int64_t>& ext
 		this->setRand();			
 	}
 	
-	cutensorCreateTensorDescriptor_t(globalHandle,			
+	cutensorCreateTensorDescriptor(globalHandle,			
 				  &(this->m_desc),				
 				  m_order,
-				  m_extents,		
+				  m_extents.data(),		
 				  NULL,		
 				  CUTENSOR_R_32F,
 				  kAlignment);
@@ -115,7 +116,7 @@ Tensor::Tensor(const std::vector<size_t>& modes, const std::vector<int64_t>& ext
 
 // Getters =>
 const std::vector<Index>& Tensor::getInds() const {return this->m_indices;}
-const std::vector<size_t>& Tensor::getModes() const {return this->m_modes;}
+const std::vector<int>& Tensor::getModes() const {return this->m_modes;}
 const std::vector<int64_t>& Tensor::getExtents() const {return this->m_extents;}
 
 size_t Tensor::getOrder() const	{return this->m_order;}
@@ -220,34 +221,40 @@ void Tensor::reshape(int split)
  *	cutensorCreateDescriptor_t, and change the m_desc.
 */
 
-// We now define the parameter break, as the integer l, such that all indices upto and including the l-th index, 
+// We now define the parameter split, as the integer l, such that all indices upto and including the l-th index, 
 // becomes the new row index, and the l+1-th to the N-th index becomes the column index; for our most useful case
 // of reshaping a tensor into a matrix.
 	
 	if (split < m_order && split > 0) 			// if split == m_order or 0, then we have a vector
 	{
-		size_t tmp1{1}, tmp2{1};
-		for (int i = 0; i < break; ++i)
+		int tmp1{1}, tmp2{1};
+		for (int i = 0; i < split; ++i)
 		{
 			tmp1 *= m_extents[i];
 		}
-		for (int i = break; i < m_order; ++i)
+		for (int i = split; i < m_order; ++i)
 		{
 			tmp2 *= m_extents[i]; 
 		}	
-		std::vector<size_t> strides = {tmp2, 1};
-		std::vector<size_t> m_extentsNew = {tmp1, tmp2};
+		std::vector<int64_t> strides = {static_cast<int64_t>(tmp2), 1LL};
+		std::vector<int64_t> m_extentsNew = {static_cast<int64_t>(tmp1), static_cast<int64_t>(tmp2)};
 		m_extents = m_extentsNew;
 		m_order = 2;
 
-		cutensorCreateTensorDescriptor_t(globalHandle,
+		cutensorCreateTensorDescriptor(globalHandle,
 				   &(this->m_desc),
 				   m_order,
-				   m_extents,
-				   strides,
+				   m_extents.data(),
+				   strides.data(),
 				   CUTENSOR_R_32F,
 				   kAlignment);
 	}
+}
+
+cutensorAlgo_t chooseContractionAlgo()
+{
+	cutensorAlgo_t alg = CUTENSOR_ALGO_DEFAULT;
+	return alg;
 }
 
 Tensor contractAB(const Tensor& A, const Tensor& B)
@@ -259,10 +266,10 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 	*/
 	
 	// DONE: TODO: Create a lookup table (IDs, dims) to initialize indices left in the output Tensor C
-	std::pair<std::vector<size_t>, std::vector<int64_t>> initC = getUniqueIndsAB(A, B);
+	std::pair<std::vector<int>, std::vector<int64_t>> initC = getUniqueIndsAB(A, B);
 
 	// C only needs its (IDs, dims) for our purposes, so this initialization will do
-	Tensor::Tensor C(initC.first, initC.second);
+	Tensor C(initC.first, initC.second);
 
 	/*
 	*	Step 2: Describe the operation to be done on input tensors; create a plan preference, estimate 
@@ -283,10 +290,10 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 
 	cutensorCreateContraction(globalHandle,
 			   &descOp,
-			   A.getDesc(), A.getModes(), CUTENSOR_OP_IDENTITY,	// descA, A.m_modes, opA
-			   B.getDesc(), B.getModes(), CUTENSOR_OP_IDENTITY,
-			   C.getDesc(), C.getModes(), CUTENSOR_OP_IDENTITY,
-			   C.getDesc(), C.getModes(),				// Output to C	
+			   A.getDesc(), A.getModes().data(), CUTENSOR_OP_IDENTITY,	// descA, A.m_modes, opA
+			   B.getDesc(), B.getModes().data(), CUTENSOR_OP_IDENTITY,
+			   C.getDesc(), C.getModes().data(), CUTENSOR_OP_IDENTITY,
+			   C.getDesc(), C.getModes().data(),				// Output to C	
 			   descCompute);
 	
   	typedef float floatTypeCompute;
@@ -308,7 +315,7 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 	uint64_t workspaceSizeEstimate{0};					// outputs estimated size to this
   	const cutensorWorksizePreference_t workspacePref = CUTENSOR_WORKSPACE_DEFAULT;
 	cutensorEstimateWorkspaceSize(globalHandle,
-			       &descOp,
+			       descOp,
 			       planPref,
 			       workspacePref,
 			       &workspaceSizeEstimate);			
@@ -346,7 +353,7 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 	cudaMemcpy(C.getDevicePtr(), C.getHostPtr(), C.getByteSize(), cudaMemcpyHostToDevice);
     	cudaDeviceSynchronize();
 
-    	cutensorContract(handle, 
+    	cutensorContract(globalHandle, 
 		      plan, 
 		      (void *)&alpha, A.getDevicePtr(), B.getDevicePtr(),
 		      (void *)&beta, C.getDevicePtr(), C.getDevicePtr(), 
@@ -357,23 +364,30 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 	return C;	
 }
 
+
 // TODO: Other Contract overloads; where we just prime the indices that fall into getUniqueIndsAB but the user
 // 	 does not want to contract, then pass the changed Tensors to contractAB
 
 // Helper function to figure out the indices of C = A * B, 
 // returns a pair of vectors (modesC, extentsC) that we assign to (C.m_modes, C.m_extents) =>
-std::pair<std::vector<size_t>, std::vector<int64_t>> getUniqueIndsAB(const Tensor& A, const Tensor& B)
+std::pair<std::vector<int>, std::vector<int64_t>> getUniqueIndsAB(const Tensor& A, const Tensor& B)
 {
  	// Builds a map of (B.modes, B.extents), (necessary to enforce the order A, B)
-	std::unordered_map<size_t,int64_t> mapB;
-	mapB.resize(B.m_modes.size());
-	for (size_t i = 0; i < B.m_modes.size(); ++i) 
+	std::unordered_map<int,int64_t> mapB;
+
+	// Since getUniqueIndsAB is not a member function we extract what we need at the start
+	std::vector<int> modesA = A.getModes();
+	std::vector<int> modesB = B.getModes();
+	std::vector<int64_t> extentsA = A.getExtents();
+	std::vector<int64_t> extentsB = B.getExtents();
+
+	for (size_t i = 0; i < modesB.size(); ++i) 
 	{
-        	mapB.emplace(B.m_modes[i], B.m_extents[i]);
+        	mapB.emplace(modesB[i], extentsB[i]);
     	}
 
-	std::vector<std::pair<size_t,int64_t>> tmp;
-    	tmp.reserve(A.m_modes.size() + B.m_modes.size());
+	std::vector<std::pair<int,int64_t>> tmp;
+    	tmp.reserve(modesA.size() + modesB.size());
 	
 	/* 
 	 * Note that this is a vector of pairs, purely because it makes more sense logically to find the data
@@ -382,13 +396,13 @@ std::pair<std::vector<size_t>, std::vector<int64_t>> getUniqueIndsAB(const Tenso
 	*/
 
     	// Adds those in A, not in B
-    	for (size_t j = 0; j < A.m_modes.size(); ++j) 
+    	for (size_t j = 0; j < modesA.size(); ++j) 
 	{
-        	size_t mode = A.m_modes[j];
+        	int mode = modesA[j];
         	auto it = mapB.find(mode);
         	if (it == mapB.end()) 
 		{
-            		tmp.emplace_back(mode, A.m_extents[j]);			// Builds the pair in place
+            		tmp.emplace_back(mode, extentsA[j]);			// Builds the pair in place
         	} 
 		else 
 		{
@@ -404,7 +418,7 @@ std::pair<std::vector<size_t>, std::vector<int64_t>> getUniqueIndsAB(const Tenso
 	
 	// Since for us it is more useful to have a pair of two separately contiguous vectors in the Tensor object,
 	// we eventually return a pair<vector<size_t>, vector<int64_t>>, i.e (C.m_modes, C.m_extents)
-	std::vector<size_t> modesC;
+	std::vector<int> modesC;
     	std::vector<int64_t> extentsC;
     	modesC.reserve(tmp.size());
     	extentsC.reserve(tmp.size());
