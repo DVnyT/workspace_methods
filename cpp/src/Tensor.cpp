@@ -2,26 +2,27 @@
 
 #include "../include/Index.hpp"
 #include "../include/Tensor.hpp"
-#include "../include/utils.hpp"
+#include "../include/CudaUtils.hpp"
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
 #include <cassert>
+#include <cstdint>
 #include <iterator>
+#include <memory>
+#include <stdexcept>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
 
 // Globals =>
+
 cutensorHandle_t globalHandle{nullptr};
 const uint32_t kAlignment{128};
 
 using floatType = float;
+using floatTypeCompute = float;
 
 // Constructors =>
-Tensor::Tensor() = default; 
-
 // DONE:  TODO: Move the logic outside the .hpp 
 
 Tensor::Tensor(const std::vector<Index>& indices)
@@ -49,41 +50,8 @@ Tensor::Tensor(const std::vector<Index>& indices)
 				  &(this->m_desc),				
 				  m_order,
 				  m_extents.data(),		
-				  NULL,					// Stride (refer below! line[196])		
+				  NULL,					// Stride (refer below! line[169])	
 				  CUTENSOR_R_32F,			// Datatype: 32-bit Real Floats
-				  kAlignment);
-}
-
-
-
-Tensor::Tensor(const std::map<int, int64_t>& lookup)		// lookup = {(key,value): (Index id, Index dim)}
-: m_indices({0}), m_order(lookup.size()), m_elements(1)
-{
-	m_modes.resize(m_order);
-	m_extents.resize(m_order);
-	for (const auto& [id, dim]: lookup)
-	{
-		m_modes.push_back(id);
-		m_extents.push_back(dim); 
-		m_elements *= dim;
-	}
-	
-	m_byteSize = sizeof(floatType) * m_elements;
-	
-	if(m_byteSize != 0)
-	{
-		this->initOnHost();
-		this->initOnDevice();
-
-		this->setRand();			
-	}
-	
-	cutensorCreateTensorDescriptor(globalHandle,			
-				  &(this->m_desc),				
-				  m_order,
-				  m_extents.data(),		
-				  NULL,				
-				  CUTENSOR_R_32F,	
 				  kAlignment);
 }
 	
@@ -114,73 +82,81 @@ Tensor::Tensor(const std::vector<int>& modes, const std::vector<int64_t>& extent
 				  kAlignment);
 }
 
-// Getters =>
-const std::vector<Index>& Tensor::getInds() const {return this->m_indices;}
-const std::vector<int>& Tensor::getModes() const {return this->m_modes;}
-const std::vector<int64_t>& Tensor::getExtents() const {return this->m_extents;}
-
-size_t Tensor::getOrder() const	{return this->m_order;}
-size_t Tensor::getElements() const {return this->m_elements;}
-size_t Tensor::getByteSize() const {return this->m_byteSize;}
-
-floatType* Tensor::getHostPtr() const {return this->m_pHost;}
-
-cutensorTensorDescriptor_t Tensor::getDesc() const {return this->m_desc;}
-void* Tensor::getDevicePtr() const {return this->m_pDevice;}	
-
 // Memory Management =>
+void Tensor::initOnHost()
+{
+	m_pHost = std::make_unique<floatType[]>(m_byteSize);
+}
+
+void Tensor::initOnDevice()
+{
+	cudaMalloc((void**)& (m_pDevice), m_byteSize);
+}
+
 void Tensor::freeMemory()
 {
-	if(m_pHost)
-	{
-		free(m_pHost);
-		m_pHost = nullptr;
-	}
+	m_pHost.reset();
 	if(m_pDevice)
 	{
 		cudaFree(m_pDevice);
 		m_pDevice = nullptr;
 	}
 }
-void Tensor::cpyToDevice()
+
+void Tensor::cpyToDevice() const
 {
-	cudaMemcpy(m_pDevice, m_pHost, m_byteSize, cudaMemcpyHostToDevice);		// copy tensor to GPU
+	cudaMemcpy(m_pDevice, m_pHost.get(), m_byteSize, cudaMemcpyHostToDevice);		// copy tensor to GPU
 }
 
-// Set values of the Tensor =>
-void Tensor::setZero()
+void Tensor::cpyToHost() const
 {
+	cudaMemcpy(m_pHost.get(), m_pDevice, m_byteSize, cudaMemcpyDeviceToHost);		// copy tensor to Host
+}
+
+// Getters =>
+const std::vector<Index>& Tensor::getInds() const {return this->m_indices;}
+const std::vector<int>& Tensor::getModes() const {return this->m_modes;}
+const std::vector<int64_t>& Tensor::getExtents() const {return this->m_extents;}
+
+int Tensor::getOrder() const	{return this->m_order;}
+size_t Tensor::getElements() const {return this->m_elements;}
+size_t Tensor::getByteSize() const {return this->m_byteSize;}
+
+floatType* Tensor::getHostPtr() const {return this->m_pHost.get();}
+
+cutensorTensorDescriptor_t Tensor::getDesc() const {return this->m_desc;}
+void* Tensor::getDevicePtr() const {return this->m_pDevice;}	
+
+// Set values of the Tensor =>
+void Tensor::setInt(const int val)
+{ 
 	this->freeMemory();
-	m_pHost = (floatType*) malloc(m_byteSize);
-	cudaMalloc((void**)& m_pDevice, m_byteSize);
-			
+	initOnHost();
+	initOnDevice();
+
 	for(size_t j = 0; j < m_elements; ++j)						// populate the tensor
 	{
-		m_pHost[j] = 0;
+		m_pHost[j] = val;
 	}
-	
 	this->cpyToDevice();
+}
+
+void Tensor::setZero()
+{
+	Tensor::setInt(0);
 }
 
 void Tensor::setOne()
 {	
-	this->freeMemory();
-	m_pHost = (floatType*) malloc(m_byteSize);
-	cudaMalloc((void**)& m_pDevice, m_byteSize);
-		
-	for(size_t j = 0; j < m_elements; ++j)						// populate the tensor
-	{
-		m_pHost[j] = 1;
-	}
-	this->cpyToDevice();
+	Tensor::setInt(1);
 }
 
 void Tensor::setRand()
 {		
 	this->freeMemory();
-	m_pHost = (floatType*) malloc(m_byteSize);
-	cudaMalloc((void**)& m_pDevice, m_byteSize);
-		
+	initOnHost();
+	initOnDevice();
+
 	for(size_t j = 0; j < m_elements; ++j)						// populate the tensor
 	{
 		m_pHost[j] = ((floatType) rand())/RAND_MAX;
@@ -189,7 +165,6 @@ void Tensor::setRand()
 }
 
 // Tensor Operations =>
-
 
 void Tensor::reshape(int split)
 { 
@@ -224,8 +199,10 @@ void Tensor::reshape(int split)
 // We now define the parameter split, as the integer l, such that all indices upto and including the l-th index, 
 // becomes the new row index, and the l+1-th to the N-th index becomes the column index; for our most useful case
 // of reshaping a tensor into a matrix.
-	
-	if (split < m_order && split > 0) 			// if split == m_order or 0, then we have a vector
+
+	std::vector<int64_t> strides;
+
+	if (split < m_order && split > 0) 			// if split == m_order or 0, then we have a rank-1
 	{
 		int tmp1{1}, tmp2{1};
 		for (int i = 0; i < split; ++i)
@@ -236,25 +213,32 @@ void Tensor::reshape(int split)
 		{
 			tmp2 *= m_extents[i]; 
 		}	
-		std::vector<int64_t> strides = {static_cast<int64_t>(tmp2), 1LL};
-		std::vector<int64_t> m_extentsNew = {static_cast<int64_t>(tmp1), static_cast<int64_t>(tmp2)};
-		m_extents = m_extentsNew;
+		strides = {static_cast<int64_t>(tmp2), 1LL};
+		m_extents = {static_cast<int64_t>(tmp1), static_cast<int64_t>(tmp2)};
 		m_order = 2;
-
-		cutensorCreateTensorDescriptor(globalHandle,
-				   &(this->m_desc),
-				   m_order,
-				   m_extents.data(),
-				   strides.data(),
-				   CUTENSOR_R_32F,
-				   kAlignment);
 	}
-}
 
-cutensorAlgo_t chooseContractionAlgo()
-{
-	cutensorAlgo_t alg = CUTENSOR_ALGO_DEFAULT;
-	return alg;
+// And for the case of reshaping to a rank-1 tensor (grouping all indices)
+
+	else if (split == m_order || split == 1)
+	{
+		int tmp1{1};
+		for(const auto& i: m_extents)
+		{
+			tmp1 *= i;
+		}
+		strides = {1LL};
+		m_extents = {static_cast<int64_t>(tmp1)};
+		m_order = 1;
+	}
+		
+	cutensorCreateTensorDescriptor(globalHandle,
+				&(this->m_desc),
+				m_order, 
+				m_extents.data(),
+				strides.data(),
+				CUTENSOR_R_32F,
+				kAlignment);
 }
 
 Tensor contractAB(const Tensor& A, const Tensor& B)
@@ -264,12 +248,34 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 	 *
 	 * 	Step 1: Describe the tensors in a suitable format 
 	*/
-	
+	// We assume A and B have called initOnHost, some value setting function and initOnDevice
+	if(A.getHostPtr() && A.getDevicePtr())
+	{
+		A.cpyToDevice();
+	}
+	else 
+	{
+		// TODO: Manage the error
+		throw std::runtime_error("Tensor A has invalid memory pointers!");
+	}
+
+	if(B.getHostPtr() && B.getDevicePtr())
+	{
+		B.cpyToDevice();
+	}
+	else
+	{
+		throw std::runtime_error("Tensor B has invalid memory pointers!");
+	}
+
 	// DONE: TODO: Create a lookup table (IDs, dims) to initialize indices left in the output Tensor C
 	std::pair<std::vector<int>, std::vector<int64_t>> initC = getUniqueIndsAB(A, B);
 
 	// C only needs its (IDs, dims) for our purposes, so this initialization will do
 	Tensor C(initC.first, initC.second);
+	C.initOnHost();
+	C.setZero();
+	C.initOnDevice();
 
 	/*
 	*	Step 2: Describe the operation to be done on input tensors; create a plan preference, estimate 
@@ -296,56 +302,28 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 			   C.getDesc(), C.getModes().data(),				// Output to C	
 			   descCompute);
 	
-  	typedef float floatTypeCompute;
   	floatTypeCompute alpha = (floatTypeCompute)1.0f;
   	floatTypeCompute beta = (floatTypeCompute)0.f;
 
-	cutensorPlan_t plan;
-	cutensorPlanPreference_t planPref;					
-	// plan holds the work to be done, in this case a contraction, along with all the parameters we tune now
-	// planPref narrows the choices of algorithms/variants/kernels to use
-  	
-	const cutensorAlgo_t algo = chooseContractionAlgo();			// default is CUTENSOR_ALGO_DEFAULT
-	
-	cutensorCreatePlanPreference(globalHandle, 
-				&planPref, 					// mode and algo go into planPref
-				algo,
-				CUTENSOR_JIT_MODE_NONE);			// Not using Just-In-Time compilation
+	cutensorPlan_t plan = makeContractionPlan(descOp);
 
-	uint64_t workspaceSizeEstimate{0};					// outputs estimated size to this
-  	const cutensorWorksizePreference_t workspacePref = CUTENSOR_WORKSPACE_DEFAULT;
-	cutensorEstimateWorkspaceSize(globalHandle,
-			       descOp,
-			       planPref,
-			       workspacePref,
-			       &workspaceSizeEstimate);			
-
-	cutensorCreatePlan(globalHandle,
-		    &plan,
-		    descOp,
-		    planPref,
-		    workspaceSizeEstimate);
-	
-	uint64_t actualWorkspaceSize{0};				// attempt to optimize memory allocated
+	uint64_t workspaceSize{0};				// attempt to optimize memory allocated
 	cutensorPlanGetAttribute(globalHandle,
                 plan,
                 CUTENSOR_PLAN_REQUIRED_WORKSPACE,
-                &actualWorkspaceSize,
-                sizeof(actualWorkspaceSize));
-
-	assert(actualWorkspaceSize <= workspaceSizeEstimate);
+                &workspaceSize,
+                sizeof(workspaceSize));
 
     	void *work = nullptr;
-    	if (actualWorkspaceSize > 0)
+    	if (workspaceSize > 0)
     	{
-        	cudaMalloc(&work, actualWorkspaceSize);
+        	cudaMalloc(&work, workspaceSize);
         	assert(uintptr_t(work) % 128 == 0); 		// workspace must be aligned to 128 byte-boundary
     	}
 
 	/*
 	 *	Step 3: Actual execution
-	 *
-	 * */
+	*/
 
 	cudaStream_t stream;
 	cudaStreamCreate(&stream);
@@ -357,16 +335,24 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 		      plan, 
 		      (void *)&alpha, A.getDevicePtr(), B.getDevicePtr(),
 		      (void *)&beta, C.getDevicePtr(), C.getDevicePtr(), 
-		      work, actualWorkspaceSize, stream);
-
-    	// TODO: Free memory!
+		      work, workspaceSize, stream);
 	
+	// Can add a CPU routine before the sync which forces the CPU to wait for the GPU to finish work
+
+	cudaStreamSynchronize(stream);
+	cudaMemcpy(C.getHostPtr(), C.getDevicePtr(), C.getByteSize(), cudaMemcpyDeviceToHost);	
+	// note the swap from the earlier cudaMemCpy! We are copying the GPU C ptr into our host ptr
+
+    	// DONE:  TODO: Free memory!
+	cudaFree(work);
+	cutensorDestroyPlan(plan);
+	cudaStreamDestroy(stream);
+	cutensorDestroyOperationDescriptor(descOp);
+
 	return C;	
 }
-
-
 // TODO: Other Contract overloads; where we just prime the indices that fall into getUniqueIndsAB but the user
-// 	 does not want to contract, then pass the changed Tensors to contractAB
+// does not want to contract, then pass the changed Tensors to contractAB
 
 // Helper function to figure out the indices of C = A * B, 
 // returns a pair of vectors (modesC, extentsC) that we assign to (C.m_modes, C.m_extents) =>

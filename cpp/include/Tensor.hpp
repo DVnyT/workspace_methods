@@ -1,11 +1,9 @@
 #pragma once
 
-#include "../include/Index.hpp"
-#include <cstddef>
-#include <cstdint>
+#include "Index.hpp"
 #include <cstdlib>
 #include <map>
-#include <vector>
+#include <memory>
 
 #include "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/include/cuda_runtime.h"
 #include "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/include/cutensor.h"
@@ -13,26 +11,27 @@
 extern cutensorHandle_t globalHandle;
 extern const uint32_t kAlignment;
 
+using floatType = float;						// changes global precision
+	
 class Tensor 
 {
 private:	
-	
-	// Main Objects =>
+	// Main Objects (you only need either m_indices OR m_modes [see Index.hpp to know why]) =>
 	std::vector<Index> m_indices;					// set of indices
-	std::vector<int> m_modes;					// an ordered set of Index identifiers
-	std::vector<int64_t> m_extents;					// dimensions of those indices
+	std::vector<int> m_modes;					// an ordered set of Index m_uniqueIDs
 	
 	// Derived Objects =>
+	std::vector<int64_t> m_extents;					// dimensions of those indices
 	int m_order{0};							// number of indices
 	size_t m_elements{1};						// total coefficients of the tensor	
  	size_t m_byteSize{0};						// total number of bytes to store m_elements
 	
 	// Tensor Coefficients =>
 	// pointer to the values/coeffs. of the tensor (host); the values of the tensor are accessed with m_pHost[i]
-	float* m_pHost{nullptr};	
+	std::unique_ptr<floatType[]> m_pHost{nullptr};	
 	
 	// cuTENSOR Objects =>
-	cutensorTensorDescriptor_t m_desc;
+	cutensorTensorDescriptor_t m_desc;				// A tensor descriptor for cuTENSOR
 	void* m_pDevice{nullptr};					// pointer to the tensor on the GPU
 
 public:
@@ -41,35 +40,30 @@ public:
 	Tensor();							// Default Constructor
 	Tensor(const std::vector<Index>& indices);
 	
-	// lookupInds[id] = dim, where (id, dim)≡ (modes, extents)
-	Tensor(const std::map<int, int64_t>& lookupInds);		// We only really need the IDs and dims!
+	// Constructors that we call internally (users won't generally know the the uniqueIDs for modes) => 
+	Tensor(const std::vector<int>& modes, const std::vector<int64_t>& extents); 
+
+	// Move =>
+	Tensor(Tensor&&) noexcept = default;
+	Tensor& operator=(Tensor&&) noexcept = default;
 	
-	Tensor(const std::vector<int>& modes, const std::vector<int64_t>& extents); // another minimal ctor
-
-	// Destructor =>
-	~Tensor();                                  			// Destructor
-    	
-	// Copy/Move =>
-	Tensor(const Tensor& other);                			// Copy Constructor
-    	Tensor& operator=(const Tensor& other);     			// Copy Assignment Operator
-    	Tensor(Tensor&& other) noexcept;            			// Move Constructor
-    	Tensor& operator=(Tensor&& other) noexcept;
-
-	// Memory Allocation Initializations =>
+	// Memory Management =>
 	void initOnHost();
 	void initOnDevice();
 	void freeMemory();
-	void cpyToDevice();
+	void cpyToHost() const;
+	void cpyToDevice() const;
 
 	// Getters =>
-	const std::vector<Index>& Tensor::getInds() const;
+	const std::vector<Index>& getInds() const;
 	const std::vector<int>& getModes() const;
-    	const std::vector<int64_t>& getExtents() const;
-    	size_t getOrder() const;
     	
+    	const std::vector<int64_t>& getExtents() const;
+	int getOrder() const;
 	size_t getElements() const;
     	size_t getByteSize() const;
-    	float* getHostPtr() const;
+
+    	floatType* getHostPtr() const;
 
 	cutensorTensorDescriptor_t getDesc() const;
 	void* getDevicePtr() const;	
@@ -79,18 +73,32 @@ public:
 	void setOne();						// set all values to 1
 	void setInt(const int val);				// sets all values to val
 	void setRand();						// set all values randomly (0 to 1)
+	
+	// Operations on 1 tensor =>
+	void reshape(int split);				// refer Tensor.cpp
 
-	// Reshape the tensor =>
-	void reshape(int split);
+	// Destructor =>
+	~Tensor();                                  			
 };
+
+class SiteTensor: public Tensor
+{
+private:
+	int m_siteNumber;
+	Index m_left;
+	Index m_phys;
+	Index m_right;
+};
+
+// 2-Tensor Operations =>
+// Not member functions! Chosen this way to give A and B equal footing.
+
 // Contracts A and B over the indices toContract, (or equivalently over the modes+extents passed) 
-// If toContract is not passed, contracts over all common indices
+// If toContract is not passed, contracts over all common indices;
 Tensor contractAB(const Tensor& A, const Tensor& B);
 Tensor contractAB(const Tensor& A, const Tensor& B, 
 		  const std::vector<Index>& toContract);
-Tensor contractAB(const Tensor& A, const Tensor& B,
-		  const std::pair<std::vector<int>, std::vector<int64_t>>& toContract);
 
-// Finds the indices of C = contractAB(A, B);
-std::pair<std::vector<int>, std::vector<int64_t>> getUniqueIndsAB(const Tensor& A, const Tensor& B);	
+// Finds the indices of C = contractAB(A, B); i.e. symmetric difference of A and B
+std::pair<std::vector<int>, std::vector<int64_t>> getUniqueIndsAB(const Tensor& A, const Tensor& B);
 
