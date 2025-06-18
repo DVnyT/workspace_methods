@@ -86,8 +86,13 @@ class SiteTensor: public Tensor
 private:
 	int m_siteNumber;
 	Index m_left;
-	Index m_phys;
+	Index m_physUp;						// Up for kets
+	Index m_physDown;					// Down for bras
 	Index m_right;
+
+public:
+	void leftNormalize(Tensor& V);				// this becomes U, V becomes the new V(dag) 
+	void rightNormalize(Tensor& U);				// this becomes V(dag), U becomes the new U	
 };
 
 // 2-Tensor Operations =>
