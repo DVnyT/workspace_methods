@@ -15,6 +15,7 @@
 #include "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/include/cutensor.h"
 
 extern cutensorHandle_t globalHandle;
+extern cusolverDnHandle_t solverHandle;
 extern const uint32_t kAlignment;
 
 using floatType = float;						// NOTE: changes global precision
@@ -30,13 +31,12 @@ using floatTypeCompute = float;
 class Tensor 
 {
 private:	
-	// Main Objects (you only need either m_indices OR m_modes [see Index.hpp to know why])
-	// m_indices is more intuitive for the user, but m_modes is more convenient for us internally =>
+	// Main object =>
 	std::vector<Index> m_indices;					// set of indices
-	std::vector<int> m_modes;					// an ordered set of Index m_uniqueIDs
 	
 	// Derived Objects =>
-	std::vector<int64_t> m_extents;					// dimensions of those indices
+	std::vector<int64_t> m_modes;					// an ordered set of Index m_uniqueIDs
+	std::vector<int> m_extents;					// dimensions of those indices
 	int m_order{0};							// number of indices
 	size_t m_elements{1};						// total coefficients of the tensor	
  	size_t m_byteSize{0};						// total number of bytes to store m_elements
@@ -55,7 +55,7 @@ public:
 	Tensor() = delete;						// Default ctor would not work for us	
 	Tensor(const std::vector<Index>& indices);
 	
-	// Constructors that we call internally (users won't generally know the the uniqueIDs for modes) => 
+	// Constructors that we call internally => 
 	Tensor(const std::vector<int>& modes, const std::vector<int64_t>& extents); 
 
 	// Copy =>
@@ -75,8 +75,8 @@ public:
 
 	// Getters =>
 	const std::vector<Index>& getInds() const;
+	
 	const std::vector<int>& getModes() const;
-    	
     	const std::vector<int64_t>& getExtents() const;
 	int getOrder() const;
 	size_t getElements() const;
@@ -129,7 +129,7 @@ private:
 	* 1) flattens the tensor to a matrix, splitting the tensor indices into 2 groups, the row indices
 	* and the column indices
 	* 2) operates on the resultant order-2 tensor by ONLY accessing its extents, strides and order; using
-	* cuSOLVER and returns some struct with the required data
+	* cuSOLVER and returns some tuple with the required data
 	* 3) unflattens the matrix into the original tensor
 	* Only part 2) of the functionality is given to the user directly, and the flattening processes are 
 	* abstracted away since it would be hard to keep track of the tensor's internal state otherwise

@@ -41,32 +41,10 @@ namespace BitPack
 	 	*/
         	uint32_t hash = generateHash(tags);
 		int32_t thisCounter = counter.fetch_add(1);
-       		
-		if (hash > MASK_HASH)
-		{
-              		throw std::out_of_range("Hash out of range.");
-		}
 
-		if (prime > MASK_PRIME)
-		{
-			throw std::out_of_range("Prime out of range");	
-		}
-
-		if (ctorState > MASK_STATE)
-		{
-	               	throw std::out_of_range("State out of range");	
-		}
-
-		if (counter > MASK_COUNTER)
-		{
-	               	throw std::out_of_range("Counter out of range");		
-		}
-
-		
-
-                return ((hash & MASK_HASH) << SHIFT_HASH)
+		return ((hash & MASK_HASH) << SHIFT_HASH)
                        | ((prime & MASK_PRIME) << SHIFT_PRIME)
                        | ((ctorState & MASK_STATE) << SHIFT_STATE)
-                       | ((counter & MASK_COUNTER) << SHIFT_COUNTER);
+                       | ((thisCounter & MASK_COUNTER) << SHIFT_COUNTER);
 	}
 }

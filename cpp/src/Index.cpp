@@ -1,11 +1,7 @@
 #include "../include/Index.hpp"
-#include <array>
+#include <bitset>
 #include <cstddef>
-#include <cstdint>
-#include <memory>
-#include <shared_mutex>
-#include <vector>
-#include <iostream>
+#include <tuple>
 
 // Private Helpers =>
 void Index::generateMode()
@@ -24,9 +20,7 @@ Index::Index(int dim)
 	// No 2 indices created with this ctor should contract!
 	m_tags = {};
 	m_prime = 0;
-	
 	m_ctorState = 1;
-	
 	generateMode();		
 }
 
@@ -34,12 +28,9 @@ Index::Index(int dim, int prime)
 : m_dim(dim), m_prime(prime)
 {
 	m_tags = {};
-
 	m_ctorState = 1;
-
 	generateMode();
 }
-
 
 Index::Index(const Index& other)
 : m_dim(other.m_dim), m_prime(other.m_prime), m_tags(other.m_tags), m_mode(other.m_mode)
@@ -53,28 +44,26 @@ Index::Index(const Index& other)
 
 Index& Index::operator=(const Index& other) 
 {
+	if (other == *this){return *this;}
 	m_dim = other.m_dim; 
 	m_prime = other.m_prime; 
 	m_tags = other.m_tags; 
 	m_mode = other.m_mode;
 	m_ctorState = 2;
 	return *this;
+// WARN: Only for debugging use!
 }
 
 // Generic Operators =>
 
-bool Index::operator<=>(const Index& other)
-{
-	return std::tie(this->m_dim, this->m_mode) < std::tie(other.m_dim, other.m_mode);	
-}	
-
 std::ostream& operator<<(std::ostream& os, Index const& idx)
 {
 
-	std::cout << "Dim = " << idx.m_dim << "\n"
+	os << "Dim = " << idx.m_dim << "\n"
 		  << "Prime = " << idx.m_prime << "\n"
 		  << "State = " << idx.m_ctorState << "\n"
-		  << "Mode = " << idx.m_mode << std::endl;
+		  << "Mode (in bits) = " << std::bitset<sizeof(idx.m_mode)*8>(idx.m_mode) << '\n'
+		  << "Mode (in decimals)= " << idx.m_mode << '\n';
 	for(int i = 0; i < 4; ++i)
 	{
 		for(int j = 0; j < 8; ++j)
@@ -94,24 +83,42 @@ int Index::getCtorState() const {return this->m_ctorState;}
 int64_t Index::getMode() const {return this->m_mode;}
 
 // Setters => 
-
 void Index::setDim(int newDim)
 {
-	m_dim = newDim;
+	if(newDim != m_dim)
+	{
+		m_dim = newDim;
+		if(m_ctorState == 2)
+		{
+			m_ctorState = 1;
+			generateMode();
+		}
+	}
 }
 
 void Index::prime(int primeIncrement)
 {
-	m_prime += primeIncrement;
+	if (primeIncrement)
+	{
+		m_prime += primeIncrement;
+		if(m_ctorState == 2)
+		{	
+			m_ctorState = 1;
+			generateMode();
+		}
+	}
 }
-
 void Index::prime()
 {
-    	m_prime++;  // Default increment of 1
+    	m_prime++;  // Default increment of 1	
+	if(m_ctorState == 2)
+	{
+		m_ctorState = 1;
+		generateMode();
+	}
 }
 
 // Destructors =>
 Index::~Index()
-{
-}
+{}
 
