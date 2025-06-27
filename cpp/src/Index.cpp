@@ -1,6 +1,7 @@
 #include "../include/Index.hpp"
 #include <bitset>
 #include <cstddef>
+#include <cstdint>
 #include <tuple>
 
 // Private Helpers =>
@@ -14,8 +15,8 @@ Index::Index()
 : Index(1, 0)
 {}	
 
-Index::Index(int dim)
-: m_dim(dim) 
+Index::Index(int64_t extent)
+: m_extent(extent) 
 {
 	// No 2 indices created with this ctor should contract!
 	m_tags = {};
@@ -24,8 +25,8 @@ Index::Index(int dim)
 	generateMode();		
 }
 
-Index::Index(int dim, int prime)
-: m_dim(dim), m_prime(prime)
+Index::Index(int64_t extent, int prime)
+: m_extent(extent), m_prime(prime)
 {
 	m_tags = {};
 	m_ctorState = 1;
@@ -33,7 +34,7 @@ Index::Index(int dim, int prime)
 }
 
 Index::Index(const Index& other)
-: m_dim(other.m_dim), m_prime(other.m_prime), m_tags(other.m_tags), m_mode(other.m_mode)
+: m_extent(other.m_extent), m_prime(other.m_prime), m_tags(other.m_tags), m_mode(other.m_mode)
 {
 	m_ctorState = 2;
 	// Simply copies the mode of other without calling generateMode().
@@ -45,7 +46,7 @@ Index::Index(const Index& other)
 Index& Index::operator=(const Index& other) 
 {
 	if (other == *this){return *this;}
-	m_dim = other.m_dim; 
+	m_extent = other.m_extent; 
 	m_prime = other.m_prime; 
 	m_tags = other.m_tags; 
 	m_mode = other.m_mode;
@@ -59,7 +60,7 @@ Index& Index::operator=(const Index& other)
 std::ostream& operator<<(std::ostream& os, Index const& idx)
 {
 
-	os << "Dim = " << idx.m_dim << "\n"
+	os << "Dim = " << idx.m_extent << "\n"
 		  << "Prime = " << idx.m_prime << "\n"
 		  << "State = " << idx.m_ctorState << "\n"
 		  << "Mode (in bits) = " << std::bitset<sizeof(idx.m_mode)*8>(idx.m_mode) << '\n'
@@ -76,18 +77,18 @@ std::ostream& operator<<(std::ostream& os, Index const& idx)
 }
 
 // Getters =>
-int Index::getDim() const {return this->m_dim;}
+int64_t Index::getExtent() const {return this->m_extent;}
 std::array<std::array<char, 8>, 4> Index::getTags() const {return this->m_tags;}
 int Index::getPrime() const {return this->m_prime;}
 int Index::getCtorState() const {return this->m_ctorState;}
 int64_t Index::getMode() const {return this->m_mode;}
 
 // Setters => 
-void Index::setDim(int newDim)
+void Index::setExtent(int newExtent)
 {
-	if(newDim != m_dim)
+	if(newExtent != m_extent)
 	{
-		m_dim = newDim;
+		m_extent = newExtent;
 		if(m_ctorState == 2)
 		{
 			m_ctorState = 1;

@@ -27,12 +27,12 @@ const uint32_t kAlignment{128};
 Tensor::Tensor(const std::vector<Index>& indices)
 : m_indices(indices), m_order(indices.size()), m_elements(1)
 {
-	m_modes.resize(m_order);
-	m_extents.resize(m_order);
+	m_modes.reserve(m_order);
+	m_extents.reserve(m_order);
 	for (size_t i = 0; i < m_order; ++i)
 	{
-		m_modes[i] = indices[i].getUniqueID();
-		m_extents[i] = indices[i].getDim();
+		m_modes[i] = indices[i].getMode();
+		m_extents[i] = indices[i].getExtent();
 		m_elements *= m_extents[i];
 	}
 	m_byteSize = sizeof(floatType) * m_elements;
@@ -61,7 +61,6 @@ Tensor::Tensor(const std::vector<int>& modes, const std::vector<int64_t>& extent
 	for (const auto& i : extents)
 	{
 		m_elements *= i;
-		m_indices.emplace_back(Index(i));
 	}
 
 	m_byteSize = sizeof(floatType) * m_elements;
@@ -118,8 +117,8 @@ void Tensor::cpyToHost() const
 
 // Getters =>
 const std::vector<Index>& Tensor::getInds() const {return this->m_indices;}
-const std::vector<int>& Tensor::getModes() const {return this->m_modes;}
 
+const std::vector<int>& Tensor::getModes() const {return this->m_modes;}
 const std::vector<int64_t>& Tensor::getExtents() const {return this->m_extents;}
 int Tensor::getOrder() const {return this->m_order;}
 size_t Tensor::getElements() const {return this->m_elements;}
@@ -274,12 +273,12 @@ void Tensor::unflatten(const std::vector<int64_t>& targetExtents, int targetOrde
 std::tuple<Tensor, Tensor, Tensor> Tensor::svd(int split)
 {
 	std::vector<int64_t> copyExtents = m_extents;
-	int copyOrder = m_order;
+	int64_t copyOrder = m_order;
 	flatten(split);
 	this->cpyToDevice();
 	
-	int m = m_extents[0], n = m_extents[1];
-	int k = std::min(m, n);
+	int64_t m = m_extents[0], n = m_extents[1];
+	int64_t k = std::min(m, n);
 
 	Index indsU(m);
 	Index indsS(k);
@@ -370,7 +369,8 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 
 	// C only needs its (IDs, dims) for our purposes, so this initialization will do
 	Tensor C(modesC, extentsC);
-
+	std::cout << modesC[0] << " " << modesC[1] << "\n";
+	std::cout << extentsC[0] << " " << extentsC[1] << '\n';
 
 	/*
 	*	Step 2: Describe the operation to be done on input tensors; create a plan preference, estimate 
@@ -409,7 +409,8 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
     	void *work = nullptr;
     	if (workspaceSize > 0)
     	{
-        	cudaMalloc(&work, workspaceSize);
+        	std::cout << "hwllow";
+		cudaMalloc(&work, workspaceSize);
         	assert(uintptr_t(work) % 128 == 0); 		// workspace must be aligned to 128 byte-boundary
     	}
 
@@ -437,7 +438,6 @@ Tensor contractAB(const Tensor& A, const Tensor& B)
 	cudaStreamDestroy(stream);
 	cutensorDestroyOperationDescriptor(descOp);
 
-	std::cout << C.getElements();
 	for(int i = 0; i < C.getElements(); ++i)
 	{
      		std::cout <<  C.getHostPtr()[i] << " ";

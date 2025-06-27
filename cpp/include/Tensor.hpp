@@ -35,10 +35,10 @@ private:
 	std::vector<Index> m_indices;					// set of indices
 	
 	// Derived Objects =>
-	std::vector<int64_t> m_modes;					// an ordered set of Index m_uniqueIDs
-	std::vector<int> m_extents;					// dimensions of those indices
+	std::vector<int> m_modes;					// an ordered set of Index m_mode(s)
+	std::vector<int64_t> m_extents;					// dimensions of those indices
 	int m_order{0};							// number of indices
-	size_t m_elements{1};						// total coefficients of the tensor	
+	size_t m_elements{1};						// total number of coefficients	
  	size_t m_byteSize{0};						// total number of bytes to store m_elements
 
 	// Tensor Coefficients =>
