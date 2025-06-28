@@ -7,7 +7,7 @@
 // Private Helpers =>
 void Index::generateMode()
 {
-	m_mode = BitPack::generateMode(m_tags, m_prime, m_ctorState);
+	m_mode = BitPack::generateMode(m_prime, m_ctorState);
 }
 
 // Constructors =>
@@ -19,7 +19,6 @@ Index::Index(int64_t extent)
 : m_extent(extent) 
 {
 	// No 2 indices created with this ctor should contract!
-	m_tags = {};
 	m_prime = 0;
 	m_ctorState = 1;
 	generateMode();		
@@ -28,13 +27,12 @@ Index::Index(int64_t extent)
 Index::Index(int64_t extent, int prime)
 : m_extent(extent), m_prime(prime)
 {
-	m_tags = {};
 	m_ctorState = 1;
 	generateMode();
 }
 
 Index::Index(const Index& other)
-: m_extent(other.m_extent), m_prime(other.m_prime), m_tags(other.m_tags), m_mode(other.m_mode)
+: m_extent(other.m_extent), m_prime(other.m_prime), m_mode(other.m_mode)
 {
 	m_ctorState = 2;
 	// Simply copies the mode of other without calling generateMode().
@@ -48,37 +46,36 @@ Index& Index::operator=(const Index& other)
 	if (other == *this){return *this;}
 	m_extent = other.m_extent; 
 	m_prime = other.m_prime; 
-	m_tags = other.m_tags; 
 	m_mode = other.m_mode;
 	m_ctorState = 2;
 	return *this;
-// WARN: Only for debugging use!
 }
 
 // Generic Operators =>
 
 std::ostream& operator<<(std::ostream& os, Index const& idx)
 {
-
 	os << "Dim = " << idx.m_extent << "\n"
 		  << "Prime = " << idx.m_prime << "\n"
 		  << "State = " << idx.m_ctorState << "\n"
 		  << "Mode (in bits) = " << std::bitset<sizeof(idx.m_mode)*8>(idx.m_mode) << '\n'
 		  << "Mode (in decimals)= " << idx.m_mode << '\n';
-	for(int i = 0; i < 4; ++i)
-	{
-		for(int j = 0; j < 8; ++j)
-		{
-			std::cout << idx.m_tags[i][j] << " ";
-		}
-     		std::cout << "\n";
-	}
 	return os;
 }
 
+bool Index::operator==(const Index& other) const
+{
+	return (this->m_extent == other.m_extent) && (this-> m_mode == other.m_mode);
+}
+
+bool Index::operator!=(const Index& other) const
+{
+	return (this->m_extent != other.m_extent) || (this-> m_mode != other.m_mode);
+}
+
+
 // Getters =>
 int64_t Index::getExtent() const {return this->m_extent;}
-std::array<std::array<char, 8>, 4> Index::getTags() const {return this->m_tags;}
 int Index::getPrime() const {return this->m_prime;}
 int Index::getCtorState() const {return this->m_ctorState;}
 int64_t Index::getMode() const {return this->m_mode;}
@@ -117,6 +114,16 @@ void Index::prime()
 		m_ctorState = 1;
 		generateMode();
 	}
+}
+
+void Index::unprime()
+{
+	prime(-1);
+}
+
+void Index::unprime(int decrement)
+{
+	prime(-decrement);
 }
 
 // Destructors =>

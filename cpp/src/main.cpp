@@ -11,21 +11,31 @@
 int main()
 {
 	cutensorCreate(&globalHandle);
-	Tensor a(std::vector<int>({'i','j', 'k'}), std::vector<int64_t>({102, 4123, 23}));
-	Tensor b(std::vector<int>({'j','k', 'l'}), std::vector<int64_t>({4123, 23, 22}));
-	for (int i = 0; i < 9672558 ; i++)
+	Tensor a(std::vector<int>({'i', 'j'}), std::vector<int64_t>({3, 3}));
+	Tensor b(std::vector<int>({'j', 'k'}), std::vector<int64_t>({3, 3}));
+	for (int i = 0; i < 9; i++)
 	{
-		a.getHostPtr()[i] = i;
+		a.getHostPtr()[i] = i + 1.0;
 	}
-	for (int j = 0; j < 2086238; j++)
+	for (int j = 0; j < 9; j++)
 	{
-		b.getHostPtr()[j] = j;
+		b.getHostPtr()[j] = j + 5.0;
 	}
-	std::cout << "hello";
 	auto start = std::chrono::high_resolution_clock::now();
-	contractAB(a, b);
+	Tensor c = contractAB(a, b);
 	auto end = std::chrono::high_resolution_clock::now();
-	std:: cout << '\n' <<  std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+	
+	std::cout << c;
+	std::cout << '\n' <<  std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+	
+	
+	auto start2 = std::chrono::high_resolution_clock::now();
+	Tensor e = contractAB(a, b);
+	auto end2 = std::chrono::high_resolution_clock::now();
+
+	std::cout << '\n' << e;
+	std::cout << '\n' <<  std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+
 	return 0;	
 }
 

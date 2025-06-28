@@ -3,17 +3,6 @@
 #include <cstdlib>
 #include "../include/CudaUtils.hpp"
 
-#define HANDLE_ERROR(x)                                               \
-{ const auto err = x;                                                 \
-  if( err != CUTENSOR_STATUS_SUCCESS )                                \
-  { printf("Error: %s\n", cutensorGetErrorString(err)); exit(-1); } \
-};
-
-#define HANDLE_CUDA_ERROR(x)                                      \
-{ const auto err = x;                                             \
-  if( err != cudaSuccess )                                        \
-  { printf("Error: %s\n", cudaGetErrorString(err)); exit(-1); } \
-};
 cutensorAlgo_t chooseContractionAlgo()
 {
 // TODO: CUTENSOR_ALGO_DEFAULT runs internal heurisitics to pick a good algorithm, but I want to understand it
@@ -35,7 +24,7 @@ cutensorPlan_t makeContractionPlan(cutensorOperationDescriptor_t descOp)
 				&planPref, 					// mode and algo go into planPref
 				algo,
 				CUTENSOR_JIT_MODE_NONE));			// Toggle JIT compilation
-//			        CUTENSOR_JIT_MODE_DEFAULT);			
+//			        CUTENSOR_JIT_MODE_NONE);			
 
 	uint64_t workspaceSizeEstimate{0};					// outputs estimated size to this
   	const cutensorWorksizePreference_t workspacePref = CUTENSOR_WORKSPACE_DEFAULT;
