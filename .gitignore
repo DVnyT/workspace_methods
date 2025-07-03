@@ -1,2 +1,11 @@
 *.obj
-/julia/
+*.exe
+*.exp
+*.lib
+*.pdb
+./cpp/DMRG/
+./julia/
+./cpp/cublas_samples/
+./cpp/cusolver_samples/
+./cpp/cutensor_samples/
+

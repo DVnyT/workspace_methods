@@ -1,0 +1,11 @@
+BasedOnStyle: Microsoft
+IndentWidth: 8
+UseTab: Never
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: Inline
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AlwaysBreakAfterReturnType: None
+DerivePointerAlignment: false
+PointerAlignment: Left
+ReflowComments: false

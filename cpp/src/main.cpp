@@ -10,7 +10,6 @@
 
 int main()
 {
-	cutensorCreate(&globalHandle);
 	Tensor a(std::vector<int>({'i', 'j'}), std::vector<int64_t>({3, 3}));
 	Tensor b(std::vector<int>({'j', 'k'}), std::vector<int64_t>({3, 3}));
 	for (int i = 0; i < 9; i++)
@@ -29,11 +28,13 @@ int main()
 	std::cout << '\n' <<  std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 	
 	
-	auto start2 = std::chrono::high_resolution_clock::now();
 	Tensor e = contractAB(a, b);
+	
+	auto start2 = std::chrono::high_resolution_clock::now();
+	auto[x, y] = lSVD(e, 1);
 	auto end2 = std::chrono::high_resolution_clock::now();
-
-	std::cout << '\n' << e;
+	std::cout << "\n" << e << "\n";
+	std::cout << x << "\n" << y;
 	std::cout << '\n' <<  std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
 
 	return 0;	

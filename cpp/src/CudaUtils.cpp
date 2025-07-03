@@ -11,7 +11,7 @@ cutensorAlgo_t chooseContractionAlgo()
 	return algo;
 }
 	
-cutensorPlan_t makeContractionPlan(cutensorOperationDescriptor_t descOp)
+cutensorPlan_t makeContractionPlan(cutensorOperationDescriptor_t descOp, cutensorHandle_t handle)
 {
 	cutensorPlan_t plan;
 	cutensorPlanPreference_t planPref;					
@@ -20,7 +20,7 @@ cutensorPlan_t makeContractionPlan(cutensorOperationDescriptor_t descOp)
   	
 	cutensorAlgo_t algo = chooseContractionAlgo();				// default is CUTENSOR_ALGO_DEFAULT
 	
-	HANDLE_ERROR(cutensorCreatePlanPreference(globalHandle, 
+	HANDLE_CUTENSOR_ERROR(cutensorCreatePlanPreference(handle, 
 				&planPref, 					// mode and algo go into planPref
 				algo,
 				CUTENSOR_JIT_MODE_NONE));			// Toggle JIT compilation
@@ -28,13 +28,13 @@ cutensorPlan_t makeContractionPlan(cutensorOperationDescriptor_t descOp)
 
 	uint64_t workspaceSizeEstimate{0};					// outputs estimated size to this
   	const cutensorWorksizePreference_t workspacePref = CUTENSOR_WORKSPACE_DEFAULT;
-	HANDLE_ERROR(cutensorEstimateWorkspaceSize(globalHandle,
+	HANDLE_CUTENSOR_ERROR(cutensorEstimateWorkspaceSize(handle,
 			       descOp,
 			       planPref,
 			       workspacePref,
 			       &workspaceSizeEstimate));			
 
-	HANDLE_ERROR(cutensorCreatePlan(globalHandle,
+	HANDLE_CUTENSOR_ERROR(cutensorCreatePlan(handle,
 		    &plan,
 		    descOp,
 		    planPref,
