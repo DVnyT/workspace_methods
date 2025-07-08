@@ -5,10 +5,12 @@
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <format>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -21,124 +23,131 @@
 
 // Globals =>
 const uint32_t kAlignment{128};
-
-// Helper Kernels =>
-template <typename T> __global__ void scale_rows_kernel(T* mat, const T* vec, int rows, int cols)
-{
-        int col = blockIdx.x * blockDim.x + threadIdx.x;
-        int row = blockIdx.y * blockDim.y + threadIdx.y;
-
-        if (row < rows && col < cols)
-        {
-                int idx = row + col * rows; // column-major
-                mat[idx] *= vec[row];
-        }
-}
-
-void scaleVdOnDevice(float* Vd_dev, const float* S_dev, int k, int n, cudaStream_t stream)
-{
-        dim3 block(32, 32);
-        dim3 grid((n + 31) / 32, (k + 31) / 32);
-
-        scale_rows_kernel<float><<<grid, block, 0, stream>>>(Vd_dev, S_dev, k, n);
-
-        cudaError_t err = cudaGetLastError();
-        if (err != cudaSuccess)
-        {
-                fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(err));
-        }
-}
+constexpr int max_precision = std::numeric_limits<double>::max_digits10; // To print/log with max precision
 
 // Constructors =>
 // DONE:  TODO: Move the logic outside the .hpp
 
 Tensor::Tensor(const std::vector<Index>& indices) : m_indices(indices), m_order(indices.size()), m_elements(1)
 {
-        m_modes.reserve(m_order);
-        m_extents.reserve(m_order);
+        m_modes.resize(m_order);
+        m_extents.resize(m_order);
         for (size_t i = 0; i < m_order; ++i)
         {
                 m_modes[i] = indices[i].getMode();
                 m_extents[i] = indices[i].getExtent();
-                m_elements *= m_extents[i];
+                m_elements *= m_extents[i]; // Total number of coefficients of the tensor = product(all extents)
         }
         m_byteSize = sizeof(floatType) * m_elements;
 
-        if (m_byteSize != 0)
-        {
-                this->initOnHost();
-                this->initOnDevice();
-        }
+        this->initOnHost(); // Allocates pinned memory (on the Host, but addressible by the GPU.)
+                            // Speeds up Host<->Device transfers.
+        this->initOnDevice();
 }
 
-Tensor::Tensor(const std::vector<int32_t>& modes,
-               const std::vector<int64_t>& extents) // alternate ctor
+Tensor::Tensor(const std::vector<int32_t>& modes, const std::vector<int64_t>& extents)
     : m_modes(modes), m_extents(extents), m_order(modes.size()), m_elements(1)
 {
-        m_indices.reserve(m_extents.size());
         for (const auto& i : extents)
         {
                 m_elements *= i;
         }
+        // Indices stay empty!
 
         m_byteSize = sizeof(floatType) * m_elements;
 
-        if (m_byteSize != 0)
-        {
-                this->initOnHost();
-                this->initOnDevice();
-        }
+        this->initOnHost();
+        this->initOnDevice();
 }
 
-Tensor::~Tensor() = default;
+Tensor::~Tensor()
+{
+        // Pointer deletion is handled by unique pointers.
+}
+// Copy/Move =>
 
 // Memory Management =>
 void Tensor::initOnHost()
 {
-        floatType* rawPtr;
-        cudaMallocHost(&rawPtr, m_byteSize);
-        m_pHost.reset(rawPtr);
-}
-
-void Tensor::initOnDevice()
-{
-        HANDLE_CUDA_ERROR(cudaMalloc((void**)&(m_pDevice), m_byteSize));
-}
-
-void Tensor::initOnDevice(cudaStream_t stream)
-{
-        HANDLE_CUDA_ERROR(cudaMallocAsync((void**)&(m_pDevice), m_byteSize, stream));
-}
-
-void Tensor::freeMemory()
-{
-        m_pHost.reset();
-        if (m_pDevice)
+        if (m_byteSize)
         {
-                cudaFree(m_pDevice);
-                m_pDevice = nullptr;
+                floatType* rawPtr{nullptr};
+                HANDLE_CUDA_ERROR(cudaMallocHost(&rawPtr, m_byteSize)); // Pinned memory.
+                if (rawPtr)
+                {
+                        m_pHost.reset(rawPtr);
+                }
+                else
+                {
+                        std::cout << "Malloc did not go through!";
+                }
         }
 }
+void Tensor::initOnDevice()
+{
+        if (m_byteSize)
+        {
+                void* rawPtr{nullptr};
+                HANDLE_CUDA_ERROR(cudaMalloc((void**)&(rawPtr), m_byteSize));
+                if (rawPtr)
+                {
+                        m_pDevice.reset(rawPtr);
+                }
+                else
+                {
+                        std::cout << "cudaMalloc did not go through!";
+                }
+        }
+}
+
 void Tensor::cpyToDevice() const
 {
-        HANDLE_CUDA_ERROR(cudaMemcpyAsync(m_pDevice, m_pHost.get(), m_byteSize, cudaMemcpyHostToDevice));
-        // copy tensor to GPU
+        if (m_pHost && m_pDevice) // Ensure allocation. Neither must be nullptr.
+        {
+                // copy tensor to GPU;
+                HANDLE_CUDA_ERROR(cudaMemcpy(m_pDevice.get(), m_pHost.get(), m_byteSize, cudaMemcpyHostToDevice));
+        }
+        else
+        {
+                throw std::runtime_error("Memory not allocated for either m_pHost or m_pDevice!");
+        }
 }
 void Tensor::cpyToDevice(cudaStream_t stream) const
 {
-        HANDLE_CUDA_ERROR(cudaMemcpyAsync(m_pDevice, m_pHost.get(), m_byteSize, cudaMemcpyHostToDevice, stream));
-        // copy tensor to GPU
+        if (m_pHost && m_pDevice) // Ensure allocation. Neither must be nullptr.
+        {
+                // copy tensor to GPU; async with respect to other streams as well.
+                HANDLE_CUDA_ERROR(
+                    cudaMemcpyAsync(m_pDevice.get(), m_pHost.get(), m_byteSize, cudaMemcpyHostToDevice, stream));
+        }
+        else
+        {
+                throw std::runtime_error("Memory not allocated for either m_pHost or m_pDevice!");
+        }
 }
 
 void Tensor::cpyToHost() const
 {
-        HANDLE_CUDA_ERROR(cudaMemcpyAsync(m_pHost.get(), m_pDevice, m_byteSize, cudaMemcpyDeviceToHost));
-        // copy tensor to Host
+        if (m_pHost && m_pDevice) // Ensure allocation. Neither must be nullptr.
+        {
+                HANDLE_CUDA_ERROR(cudaMemcpy(m_pHost.get(), m_pDevice.get(), m_byteSize, cudaMemcpyDeviceToHost));
+        }
+        else
+        {
+                throw std::runtime_error("Memory not allocated for either m_pHost or m_pDevice!");
+        }
 }
 void Tensor::cpyToHost(cudaStream_t stream) const
 {
-        HANDLE_CUDA_ERROR(cudaMemcpyAsync(m_pHost.get(), m_pDevice, m_byteSize, cudaMemcpyDeviceToHost, stream));
-        // copy tensor to Host
+        if (m_pHost && m_pDevice) // Ensure allocation. Neither must be nullptr.
+        {
+                HANDLE_CUDA_ERROR(
+                    cudaMemcpyAsync(m_pHost.get(), m_pDevice.get(), m_byteSize, cudaMemcpyDeviceToHost, stream));
+        }
+        else
+        {
+                throw std::runtime_error("Memory not allocated for either m_pHost or m_pDevice!");
+        }
 }
 
 // Getters =>
@@ -146,7 +155,6 @@ const std::vector<Index>& Tensor::getInds() const
 {
         return this->m_indices;
 }
-
 const std::vector<int32_t>& Tensor::getModes() const
 {
         return this->m_modes;
@@ -167,31 +175,20 @@ size_t Tensor::getByteSize() const
 {
         return this->m_byteSize;
 }
-
-floatType* Tensor::getHostPtr() const
+floatType* Tensor::getHostPtr() const // WARN: returns the raw pointer!
 {
         return this->m_pHost.get();
-} // WARN: returns float*
-
+}
 cutensorTensorDescriptor_t& Tensor::getDesc()
 {
         return this->m_desc;
 }
 void* Tensor::getDevicePtr() const
 {
-        return this->m_pDevice;
+        return this->m_pDevice.get(); // WARN: returns the raw pointer!
 }
 
 // Set values of the Tensor =>
-void Tensor::setInt(const int val, cudaStream_t stream)
-{
-        for (size_t j = 0; j < m_elements; ++j) // populate the tensor
-        {
-                m_pHost.get()[j] = val;
-        }
-        this->cpyToDevice(stream);
-}
-
 void Tensor::setZero(cudaStream_t stream)
 {
         Tensor::setInt(0, stream);
@@ -201,25 +198,56 @@ void Tensor::setOne(cudaStream_t stream)
 {
         Tensor::setInt(1, stream);
 }
-
-void Tensor::setRand(cudaStream_t stream)
+void Tensor::setInt(const int val, cudaStream_t stream)
 {
+        auto tmp = this->getHostPtr();
         for (size_t j = 0; j < m_elements; ++j) // populate the tensor
         {
-                m_pHost.get()[j] = ((floatType)rand()) / RAND_MAX;
+                tmp[j] = val;
         }
         this->cpyToDevice(stream);
 }
+void Tensor::setRand(cudaStream_t stream)
+{
+        auto tmp = this->getHostPtr();
+        for (size_t j = 0; j < m_elements; ++j) // populate the tensor
+        {
+                tmp[j] = ((floatType)rand()) / RAND_MAX;
+        }
+        this->cpyToDevice(stream);
+}
+// For custom values, note that getHostPtr() returns the raw ptr. Column-major ordering is followed by cuTENSOR,
+// cuSOLVER etc.
 
 void Tensor::setInds(const std::vector<Index>& newInds)
 {
-        m_indices.resize(newInds.size());
-        for (int i = 0; i < newInds.size(); ++i)
+        m_order = newInds.size();
+        m_indices.resize(m_order);
+        m_extents.resize(m_order);
+        m_elements = 1;
+        for (int i = 0; i < m_order; ++i)
         {
                 m_indices[i] = newInds[i];
+                m_extents[i] = newInds[i].getExtent();
+                m_elements *= m_extents[i];
+        }
+        m_byteSize = sizeof(floatType) * m_elements;
+}
+
+// Other modifiers =>
+void Tensor::primeAll()
+{
+        for (int i = 0; i < m_order; ++i)
+        {
+                m_indices[i].prime();
         }
 }
-// Basic unary Operations [call A.operation();] =>
+
+void Tensor::nextPermute() {}
+
+void Tensor::matchPermute(const Tensor& other) {}
+
+// Norms =>
 floatType Tensor::fNorm() const
 {
         return std::sqrt(this->fNormSquared());
@@ -233,17 +261,6 @@ floatType Tensor::fNormSquared() const
         }
         return res;
 }
-void Tensor::primeAll()
-{
-        for (int i = 0; i < m_order; ++i)
-        {
-                m_indices[i].prime(m_modes[i]);
-        }
-}
-
-void Tensor::nextPermute() {}
-
-void Tensor::matchPermute(const Tensor& other) {}
 
 // Arithmetic =>
 
@@ -252,26 +269,24 @@ static void printLevel(std::ostream& os, const floatType* data, const std::vecto
                        const std::vector<size_t>& strides, int dim, size_t offset)
 {
         int64_t N = extents[dim];
-
         os << "[";
+        size_t idx;
+        auto order = extents.size();
         for (int64_t i = 0; i < N; ++i)
         {
-                size_t idx = offset + i * strides[dim];
+                idx = offset + i * strides[dim];
 
-                if (dim + 1 == (int)extents.size())
+                if (dim + 1 == order)
                 {
                         // Last dimension: print value
-                        os << data[idx];
+                        os << std::format("{:.{}f}", data[idx], max_precision);
                 }
                 else
                 {
-                        // For 2D and higher, add newline and indent only for inner arrays (not the first)
                         if (i > 0)
                                 os << "\n ";
-
                         printLevel(os, data, extents, strides, dim + 1, idx);
                 }
-
                 if (i + 1 < N)
                         os << ", ";
         }
@@ -280,7 +295,7 @@ static void printLevel(std::ostream& os, const floatType* data, const std::vecto
 
 std::ostream& operator<<(std::ostream& os, const Tensor& T)
 {
-        const auto& extents = T.getExtents();
+        const std::vector<int64_t>& extents{T.getExtents()};
         int order = T.getOrder();
 
         if (T.getElements() == 0)
@@ -290,19 +305,18 @@ std::ostream& operator<<(std::ostream& os, const Tensor& T)
         }
         if (order == 0)
         {
-                // Scalar (0D tensor with 1 element)
                 os << *(T.getHostPtr());
                 return os;
         }
-        // precompute column-major strides:
-        //   stride[0] = 1
-        //   stride[i] = product(extents[0..i-1])
+
         std::vector<size_t> strides(order, 1);
         for (int i = 1; i < order; ++i)
+        {
                 strides[i] = strides[i - 1] * size_t(extents[i - 1]);
+        }
 
-        // start recursion at dim 0, offset 0
         printLevel(os, T.getHostPtr(), extents, strides, 0, 0);
+
         return os;
 }
 
@@ -313,15 +327,14 @@ std::ostream& operator<<(std::ostream& os, const Tensor& T)
 
 std::pair<std::vector<int32_t>, std::vector<int64_t>> getUniqueIndsAB(const Tensor& A, const Tensor& B)
 {
-        // Builds a map of (B.modes, B.extents), (necessary to enforce the order A, B)
-        std::unordered_map<int32_t, int64_t> mapB;
-
-        // Since getUniqueIndsAB is not a member function we extract what we need at
-        // the start
+        // Since getUniqueIndsAB is not a member function we extract what we need at the start
         std::vector<int32_t> modesA = A.getModes();
         std::vector<int32_t> modesB = B.getModes();
         std::vector<int64_t> extentsA = A.getExtents();
         std::vector<int64_t> extentsB = B.getExtents();
+
+        // Builds a map of (B.modes, B.extents), (necessary to enforce the order A, B)
+        std::unordered_map<int32_t, int64_t> mapB;
 
         for (size_t i = 0; i < modesB.size(); ++i)
         {
@@ -337,14 +350,14 @@ std::pair<std::vector<int32_t>, std::vector<int64_t>> getUniqueIndsAB(const Tens
 	 * necessarily the same order.
          */
 
-        // Adds those in A, not in B
+        // Adds those in A, not in B.
+
         for (size_t j = 0; j < modesA.size(); ++j)
         {
-                int mode = modesA[j];
-                auto it = mapB.find(mode);
+                auto it = mapB.find(modesA[j]);
                 if (it == mapB.end())
                 {
-                        tmp.emplace_back(mode, extentsA[j]); // Builds the pair in place
+                        tmp.emplace_back(modesA[j], extentsA[j]); // Builds the pair in place
                 }
                 else
                 {
@@ -364,12 +377,10 @@ std::pair<std::vector<int32_t>, std::vector<int64_t>> getUniqueIndsAB(const Tens
         // vector<int64_t>>, i.e (C.m_modes, C.m_extents)
         std::vector<int32_t> modesC;
         std::vector<int64_t> extentsC;
-        modesC.reserve(tmp.size());
-        extentsC.reserve(tmp.size());
         for (auto& pr : tmp)
         {
-                modesC.push_back(pr.first);
-                extentsC.push_back(pr.second);
+                modesC.emplace_back(pr.first);
+                extentsC.emplace_back(pr.second);
         }
 
         return {std::move(modesC), std::move(extentsC)};
@@ -387,21 +398,18 @@ std::pair<std::vector<int32_t>, std::vector<int64_t>> getUniqueIndsAB(const Tens
 * identity operation.
 */
 
-Tensor contractAB(Tensor& A, Tensor& B)
+Tensor contractAB(Tensor& A, Tensor& B, cutensorHandle_t handle, cudaStream_t stream)
 {
-        CutensorHandle handle; // Would eventually be an acquired handle from a HandlePool
+        // Creates Tensor descriptors for the input tensors
+        // The NULL is when we use default strides. Strides are discussed below where we write the logic for SVDs.
+        // The kAlignment = 128 is the 128-byte boundary that our descriptor must be aligned to.
         HANDLE_CUTENSOR_ERROR(cutensorCreateTensorDescriptor(handle, &(A.getDesc()), A.getOrder(),
-                                                             A.getExtents().data(),
-                                                             NULL,           // Stride (refer below! line[169])
-                                                             CUTENSOR_R_32F, // Datatype: 32-bit Real Floats
-                                                             kAlignment));
+                                                             A.getExtents().data(), NULL, CUTENSOR_R_32F, kAlignment));
 
         HANDLE_CUTENSOR_ERROR(cutensorCreateTensorDescriptor(handle, &(B.getDesc()), B.getOrder(),
-                                                             B.getExtents().data(),
-                                                             NULL,           // Stride (refer below! line[169])
-                                                             CUTENSOR_R_32F, // Datatype: 32-bit Real Floats
-                                                             kAlignment));
-        CudaStream stream;
+                                                             B.getExtents().data(), NULL, CUTENSOR_R_32F, kAlignment));
+
+        // TODO: Can let the user ensure that there are values on the Device instead of this check.
         if (A.getHostPtr() && A.getDevicePtr())
         {
                 A.cpyToDevice(stream);
@@ -419,26 +427,25 @@ Tensor contractAB(Tensor& A, Tensor& B)
         {
                 throw std::runtime_error("Tensor B has invalid memory pointers!");
         }
+
         auto [modesC, extentsC] = getUniqueIndsAB(A, B);
-        // C only needs its (IDs, dims) for our purposes, so this initialization will do
+        // C only needs its (IDs, dims) for our purposes, so this initialization will do.
         Tensor C(modesC, extentsC);
 
+        // We make our last tensor descriptor.
         HANDLE_CUTENSOR_ERROR(cutensorCreateTensorDescriptor(handle, &(C.getDesc()), C.getOrder(),
-                                                             C.getExtents().data(),
-                                                             NULL,           // Stride (refer below! line[169])
-                                                             CUTENSOR_R_32F, // Datatype: 32-bit Real Floats
-                                                             kAlignment));
+                                                             C.getExtents().data(), NULL, CUTENSOR_R_32F, kAlignment));
 
-        cutensorOperationDescriptor_t descOp; // will encode the operation, init. by function below
-        cutensorComputeDescriptor_t descCompute = CUTENSOR_COMPUTE_DESC_32F; // Precision of contraction
+        cutensorOperationDescriptor_t descOp; // will encode the operation, initialized by function below.
+        cutensorComputeDescriptor_t descCompute = CUTENSOR_COMPUTE_DESC_32F; // Precision of contraction.
+
         HANDLE_CUTENSOR_ERROR(cutensorCreateContraction(handle, &descOp, A.getDesc(), A.getModes().data(),
                                                         CUTENSOR_OP_IDENTITY, // descA, A.m_modes, opA
                                                         B.getDesc(), B.getModes().data(), CUTENSOR_OP_IDENTITY,
                                                         C.getDesc(), C.getModes().data(), CUTENSOR_OP_IDENTITY,
-                                                        C.getDesc(),
-                                                        C.getModes().data(), // Output to D
-                                                        descCompute));
+                                                        C.getDesc(), C.getModes().data(), descCompute));
 
+        // TODO: Cache workspace sizes and reuse them!
         cutensorPlan_t plan = makeContractionPlan(descOp, handle);
         uint64_t workspaceSize{0}; // attempt to optimize memory allocated
         HANDLE_CUTENSOR_ERROR(cutensorPlanGetAttribute(handle, plan, CUTENSOR_PLAN_REQUIRED_WORKSPACE, &workspaceSize,
@@ -446,43 +453,39 @@ Tensor contractAB(Tensor& A, Tensor& B)
         void* work = nullptr;
         if (workspaceSize > 0)
         {
+                // TODO: Replace this cudaMalloc with an acquire() from a memory pool.
                 HANDLE_CUDA_ERROR(cudaMalloc(&work, workspaceSize));
-                assert(uintptr_t(work) % kAlignment == 0); // workspace must be aligned to 128 byte-boundary
         }
 
-        floatTypeCompute alpha{1.0f}, beta{0.0f};
+        floatType alpha{1.0f}, beta{0.0f};
+
         HANDLE_CUTENSOR_ERROR(cutensorContract(handle, plan, (void*)&alpha, A.getDevicePtr(), B.getDevicePtr(),
                                                (void*)&beta, C.getDevicePtr(), C.getDevicePtr(), work, workspaceSize,
                                                stream));
-
         // Can add a CPU routine before the sync which forces the CPU to wait for the
         // GPU to finish work
-        HANDLE_CUDA_ERROR(cudaStreamSynchronize(stream));
+
         C.cpyToHost(stream);
-        // note the swap from the earlier cudaMemCpy! We are copying the GPU C ptr
-        // into our host ptr DONE:  TODO: Free memory!
+
         if (work)
         {
                 HANDLE_CUDA_ERROR(cudaFree(work));
         }
-
         HANDLE_CUTENSOR_ERROR(cutensorDestroyPlan(plan));
         HANDLE_CUTENSOR_ERROR(cutensorDestroyOperationDescriptor(descOp));
-
         return C;
 }
-Tensor axpyABC(Tensor& A, Tensor& B, Tensor& C)
+
+Tensor axpyABC(Tensor& A, Tensor& B, Tensor& C, cutensorHandle_t handle, cudaStream_t stream)
 {
-        return axpyABC(1.0f, A, B, 1.0f, C);
+        return axpyABC(1.0f, A, B, 1.0f, C, handle, stream);
 }
 
-Tensor axpyABC(floatType alpha, Tensor& A, Tensor& B, floatType beta, Tensor& C)
+Tensor axpyABC(floatType alpha, Tensor& A, Tensor& B, floatType beta, Tensor& C, cutensorHandle_t handle,
+               cudaStream_t stream)
 {
-        CutensorHandle handle;
-        CudaStream stream;
-        // Initialize D; note that D has the same modes, extents as D
+        // Initialize D; note that D has the same modes, extents as C.
         Tensor D(C.getModes(), C.getExtents());
-        D.setZero(stream);
         HANDLE_CUTENSOR_ERROR(cutensorCreateTensorDescriptor(handle, &(A.getDesc()), A.getOrder(),
                                                              A.getExtents().data(),
                                                              NULL,           // Stride (refer below! line[169])
@@ -534,14 +537,6 @@ Tensor axpyABC(floatType alpha, Tensor& A, Tensor& B, floatType beta, Tensor& C)
                 // TODO: Manage the error
                 throw std::runtime_error("Tensor A has invalid memory pointers!");
         }
-        if (D.getHostPtr() && D.getDevicePtr())
-        {
-                D.cpyToDevice(stream);
-        }
-        else
-        {
-                throw std::runtime_error("Tensor B has invalid memory pointers!");
-        }
 
         cutensorOperationDescriptor_t descOp;
         cutensorComputeDescriptor_t descCompute = CUTENSOR_COMPUTE_DESC_32F;
@@ -559,24 +554,18 @@ Tensor axpyABC(floatType alpha, Tensor& A, Tensor& B, floatType beta, Tensor& C)
         if (workspaceSize > 0)
         {
                 HANDLE_CUDA_ERROR(cudaMalloc(&work, workspaceSize));
-                assert(uintptr_t(work) % 128 == 0); // workspace must be aligned to 128 byte-boundary
         }
         HANDLE_CUTENSOR_ERROR(cutensorContract(handle, plan, (void*)&alpha, A.getDevicePtr(), B.getDevicePtr(),
                                                (void*)&beta, C.getDevicePtr(), D.getDevicePtr(), work, workspaceSize,
                                                stream));
 
-        // Can add a CPU routine before the sync which forces the CPU to wait for the
-        // GPU to finish work
-        HANDLE_CUDA_ERROR(cudaStreamSynchronize(stream));
         D.cpyToHost(stream);
-        // note the swap from the earlier cudaMemCpy! We are copying the GPU C ptr
-        // into our host ptr DONE:  TODO: Free memory!
+
         if (work != nullptr)
         {
                 HANDLE_CUDA_ERROR(cudaFree(work));
         }
         HANDLE_CUTENSOR_ERROR(cutensorDestroyPlan(plan));
-        HANDLE_CUDA_ERROR(cudaStreamDestroy(stream));
         HANDLE_CUTENSOR_ERROR(cutensorDestroyOperationDescriptor(descOp));
         return D;
 }
@@ -611,10 +600,59 @@ Tensor axpyABC(floatType alpha, Tensor& A, Tensor& B, floatType beta, Tensor& C)
 // We now define the parameter split, as the integer l, such that all indices upto and including the l-th index,
 // becomes the new row index, and the l+1-th to the N-th index becomes the column index; for our most useful case of
 // reshaping a tensor into a matrix.
-std::pair<Tensor, Tensor> lSVD(Tensor& A, int split)
+
+// Helper Kernels =>
+template <typename T> __global__ void scale_rows_kernel(T* mat, const T* vec, int rows, int cols)
 {
-        CusolverHandle handle;
-        CudaStream stream;
+        int col = blockIdx.x * blockDim.x + threadIdx.x;
+        int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+        if (row < rows && col < cols)
+        {
+                int idx = row + col * rows; // column-major
+                mat[idx] *= vec[row];
+        }
+}
+template <typename T> __global__ void scale_cols_kernel(T* mat, const T* vec, int rows, int cols)
+{
+        int col = blockIdx.x * blockDim.x + threadIdx.x;
+        int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+        if (row < rows && col < cols)
+        {
+                int idx = row + col * rows; // column-major
+                mat[idx] *= vec[col];
+        }
+}
+// For U matrix (m×k) - scale rows
+void scaleUOnDevice(floatType* U_dev, const floatType* S_dev, int m, int k, cudaStream_t stream)
+{
+        dim3 block(32, 32);
+        dim3 grid((k + 31) / 32, (m + 31) / 32); // k cols, m rows
+        (scale_rows_kernel<floatType>)<<<grid, block, 0, stream>>>(U_dev, S_dev, m, k);
+        cudaError_t err = cudaGetLastError();
+        if (err != cudaSuccess)
+        {
+                fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(err));
+        }
+}
+
+// For Vd matrix (k×n) - scale columns
+void scaleVdOnDevice(floatType* Vd_dev, const floatType* S_dev, int k, int n, cudaStream_t stream)
+{
+        dim3 block(32, 32);
+        dim3 grid((n + 31) / 32, (k + 31) / 32); // n cols, k rows
+        scale_cols_kernel<floatType><<<grid, block, 0, stream>>>(Vd_dev, S_dev, k, n);
+        cudaError_t err = cudaGetLastError();
+        if (err != cudaSuccess)
+        {
+                fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(err));
+        }
+}
+
+std::pair<Tensor, Tensor> lSVD(Tensor& A, int split, cusolverDnHandle_t handle, cudaStream_t stream)
+{
+        // TODO: Move this stream-setting outside the function.
         HANDLE_CUSOLVER_ERROR(cusolverDnSetStream(handle, stream));
 
         if (A.getHostPtr() && A.getDevicePtr())
@@ -627,7 +665,7 @@ std::pair<Tensor, Tensor> lSVD(Tensor& A, int split)
                 throw std::runtime_error("Tensor A has invalid memory pointers!");
         }
 
-        int64_t m{1}, n{1}, k;
+        int64_t m{1}, n{1}, k{1};
         int i = 0;
         size_t order = A.getOrder();
         const std::vector<int64_t>& extents = A.getExtents();
@@ -646,18 +684,15 @@ std::pair<Tensor, Tensor> lSVD(Tensor& A, int split)
         {
                 throw std::runtime_error("Unacceptable split value!");
         }
+
         k = std::min(m, n);
         Index indsU(m);
         Index indsS(k);
         Index indsVd(n);
-
         Tensor U(std::vector<Index>{indsU, indsS});
-        U.setZero(stream);
-	Tensor Vd(std::vector<Index>({indsS, indsVd}));
-	Vd.setZero(stream);
-        size_t allocSize = sizeof(floatTypeCompute) * k;
-        floatTypeCompute* SpHost;
-        HANDLE_CUDA_ERROR(cudaMallocHost(&SpHost, allocSize));
+        Tensor Vd(std::vector<Index>{indsS, indsVd});
+
+        size_t allocSize = sizeof(floatType) * k;
         void* SpDevice;
         HANDLE_CUDA_ERROR(cudaMallocAsync((void**)&SpDevice, allocSize, stream));
 
@@ -667,47 +702,118 @@ std::pair<Tensor, Tensor> lSVD(Tensor& A, int split)
         int lwork{0};
 
         gesvdjInfo_t gesvdj_params = NULL;
-        const double tol = 1.e-6;
-        const int max_sweeps = 15;
         HANDLE_CUSOLVER_ERROR(cusolverDnCreateGesvdjInfo(&gesvdj_params));
-        HANDLE_CUSOLVER_ERROR(cusolverDnXgesvdjSetTolerance(gesvdj_params, tol));
-        HANDLE_CUSOLVER_ERROR(cusolverDnXgesvdjSetMaxSweeps(gesvdj_params, max_sweeps));
 
         HANDLE_CUSOLVER_ERROR(cusolverDnSgesvdj_bufferSize(
-            handle, CUSOLVER_EIG_MODE_VECTOR, 1, m, n, reinterpret_cast<floatTypeCompute*>(A.getDevicePtr()), m,
-            reinterpret_cast<floatTypeCompute*>(SpDevice), reinterpret_cast<floatTypeCompute*>(U.getDevicePtr()),
-            m,                                                         // U: m×k, lda=m
-            reinterpret_cast<floatTypeCompute*>(Vd.getDevicePtr()), k, // Vᵀ: k×n, ldv=k
+            handle, CUSOLVER_EIG_MODE_VECTOR, 1, m, n, reinterpret_cast<floatType*>(A.getDevicePtr()), m,
+            reinterpret_cast<floatType*>(SpDevice), reinterpret_cast<floatType*>(U.getDevicePtr()),
+            m,                                                  // U: m×k, lda=m
+            reinterpret_cast<floatType*>(Vd.getDevicePtr()), k, // Vᵀ: k×n, ldv=k
             &lwork, gesvdj_params));
 
-        floatTypeCompute* workDevice = nullptr;
-        HANDLE_CUDA_ERROR(cudaMalloc(reinterpret_cast<void**>(&workDevice), sizeof(floatTypeCompute) * lwork));
+        floatType* workDevice = nullptr;
+        HANDLE_CUDA_ERROR(cudaMallocAsync(reinterpret_cast<void**>(&workDevice), sizeof(floatType) * lwork, stream));
 
         HANDLE_CUSOLVER_ERROR(cusolverDnSgesvdj(
-            handle, CUSOLVER_EIG_MODE_VECTOR, 1, m, n, reinterpret_cast<floatTypeCompute*>(A.getDevicePtr()), m,
-            reinterpret_cast<floatTypeCompute*>(SpDevice), reinterpret_cast<floatTypeCompute*>(U.getDevicePtr()), m,
-            reinterpret_cast<floatTypeCompute*>(Vd.getDevicePtr()), k, workDevice, lwork, devInfo, gesvdj_params));
+            handle, CUSOLVER_EIG_MODE_VECTOR, 1, m, n, reinterpret_cast<floatType*>(A.getDevicePtr()), m,
+            reinterpret_cast<floatType*>(SpDevice), reinterpret_cast<floatType*>(U.getDevicePtr()), m,
+            reinterpret_cast<floatType*>(Vd.getDevicePtr()), k, workDevice, lwork, devInfo, gesvdj_params));
 
-        scaleVdOnDevice(reinterpret_cast<float*>(Vd.getDevicePtr()), reinterpret_cast<const float*>(SpDevice), k, n,
-                        stream);
-
+        scaleVdOnDevice(reinterpret_cast<floatType*>(Vd.getDevicePtr()), reinterpret_cast<const floatType*>(SpDevice),
+                        k, n, stream);
+        HANDLE_CUDA_ERROR(cudaStreamSynchronize(stream));
         Vd.cpyToHost(stream);
-        HANDLE_CUDA_ERROR(
-            cudaMemcpyAsync(SpHost, SpDevice, sizeof(floatTypeCompute) * k, cudaMemcpyDeviceToHost, stream));
 
         HANDLE_CUDA_ERROR(cudaMemcpyAsync(&info, devInfo, sizeof(int), cudaMemcpyDeviceToHost, stream));
         U.cpyToHost(stream);
 
-        HANDLE_CUDA_ERROR(cudaStreamSynchronize(stream));
-        if (info != 0)
-        {
-                throw std::runtime_error("SVD failed with info = " + std::to_string(info));
-        }
-        HANDLE_CUDA_ERROR(cudaFree(workDevice));
-        HANDLE_CUDA_ERROR(cudaFree(devInfo));
-        HANDLE_CUDA_ERROR(cudaFree(SpDevice));
+        HANDLE_CUDA_ERROR(cudaFreeAsync(workDevice, stream));
+        HANDLE_CUDA_ERROR(cudaFreeAsync(devInfo, stream));
+        HANDLE_CUDA_ERROR(cudaFreeAsync(SpDevice, stream));
         cusolverDnDestroyGesvdjInfo(gesvdj_params);
-        HANDLE_CUDA_ERROR(cudaFreeHost(SpHost));
+
+        return std::pair<Tensor, Tensor>{std::move(U), std::move(Vd)};
+}
+
+std::pair<Tensor, Tensor> rSVD(Tensor& A, int split, cusolverDnHandle_t handle, cudaStream_t stream)
+{
+        if (A.getHostPtr() && A.getDevicePtr())
+        {
+                A.cpyToDevice(stream);
+        }
+        else
+        {
+                // TODO: Manage the error
+                throw std::runtime_error("Tensor A has invalid memory pointers!");
+        }
+
+        int64_t m{1}, n{1}, k{1};
+        int i = 0;
+        size_t order = A.getOrder();
+        const std::vector<int64_t>& extents = A.getExtents();
+        if (split < order && split > 0) // if split == m_order or 0, then we have a rank-1
+        {
+                for (; i < split; ++i)
+                {
+                        m *= extents[i];
+                }
+                for (; i < order; ++i)
+                {
+                        n *= extents[i];
+                }
+        }
+        else
+        {
+                throw std::runtime_error("Unacceptable split value!");
+        }
+
+        k = std::min(m, n);
+        Index indsU(m);
+        Index indsS(k);
+        Index indsVd(n);
+        Tensor U(std::vector<Index>{indsU, indsS});
+        Tensor Vd(std::vector<Index>{indsS, indsVd});
+
+        size_t allocSize = sizeof(floatType) * k;
+        void* SpDevice;
+        HANDLE_CUDA_ERROR(cudaMallocAsync((void**)&SpDevice, allocSize, stream));
+
+        int info = 0;
+        int* devInfo{nullptr};
+        HANDLE_CUDA_ERROR(cudaMallocAsync((void**)&devInfo, sizeof(int), stream));
+        int lwork{0};
+
+        gesvdjInfo_t gesvdj_params = NULL;
+        HANDLE_CUSOLVER_ERROR(cusolverDnCreateGesvdjInfo(&gesvdj_params));
+
+        HANDLE_CUSOLVER_ERROR(cusolverDnSgesvdj_bufferSize(
+            handle, CUSOLVER_EIG_MODE_VECTOR, 1, m, n, reinterpret_cast<floatType*>(A.getDevicePtr()), m,
+            reinterpret_cast<floatType*>(SpDevice), reinterpret_cast<floatType*>(U.getDevicePtr()),
+            m,                                                  // U: m×k, lda=m
+            reinterpret_cast<floatType*>(Vd.getDevicePtr()), k, // Vᵀ: k×n, ldv=k
+            &lwork, gesvdj_params));
+
+        floatType* workDevice = nullptr;
+        HANDLE_CUDA_ERROR(cudaMalloc(reinterpret_cast<void**>(&workDevice), sizeof(floatType) * lwork));
+        HANDLE_CUDA_ERROR(cudaStreamSynchronize(stream));
+        HANDLE_CUSOLVER_ERROR(cusolverDnSgesvdj(
+            handle, CUSOLVER_EIG_MODE_VECTOR, 1, m, n, reinterpret_cast<floatType*>(A.getDevicePtr()), m,
+            reinterpret_cast<floatType*>(SpDevice), reinterpret_cast<floatType*>(U.getDevicePtr()), m,
+            reinterpret_cast<floatType*>(Vd.getDevicePtr()), k, workDevice, lwork, devInfo, gesvdj_params));
+
+        scaleUOnDevice(reinterpret_cast<floatType*>(U.getDevicePtr()), reinterpret_cast<const floatType*>(SpDevice), m,
+                       k, stream);
+
+        HANDLE_CUDA_ERROR(cudaStreamSynchronize(stream));
+
+        Vd.cpyToHost(stream);
+        HANDLE_CUDA_ERROR(cudaMemcpyAsync(&info, devInfo, sizeof(int), cudaMemcpyDeviceToHost, stream));
+        U.cpyToHost(stream);
+
+        HANDLE_CUDA_ERROR(cudaFreeAsync(workDevice, stream));
+        HANDLE_CUDA_ERROR(cudaFreeAsync(devInfo, stream));
+        HANDLE_CUDA_ERROR(cudaFreeAsync(SpDevice, stream));
+        cusolverDnDestroyGesvdjInfo(gesvdj_params);
 
         return std::pair<Tensor, Tensor>{std::move(U), std::move(Vd)};
 }

@@ -9,3 +9,7 @@ AlwaysBreakAfterReturnType: None
 DerivePointerAlignment: false
 PointerAlignment: Left
 ReflowComments: false
+AlignEscapedNewlines: Left
+KeepEmptyLinesAtTheStartOfBlocks: false
+AlwaysBreakBeforeMultilineStrings: false
+AlignConsecutiveMacros: true

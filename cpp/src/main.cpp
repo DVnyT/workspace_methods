@@ -1,42 +1,41 @@
-#include "../include/Index.hpp"
 #include "../include/CudaUtils.hpp"
+#include "../include/DevicePools.hpp"
+#include "../include/Index.hpp"
 #include "../include/Tensor.hpp"
 #include <array>
+#include <chrono>
+#include <iostream>
+#include <iterator>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <iostream>
-#include <chrono>
 
 int main()
 {
-	Tensor a(std::vector<int>({'i', 'j'}), std::vector<int64_t>({3, 3}));
-	Tensor b(std::vector<int>({'j', 'k'}), std::vector<int64_t>({3, 3}));
-	for (int i = 0; i < 9; i++)
-	{
-		a.getHostPtr()[i] = i + 1.0;
-	}
-	for (int j = 0; j < 9; j++)
-	{
-		b.getHostPtr()[j] = j + 5.0;
-	}
-	auto start = std::chrono::high_resolution_clock::now();
-	Tensor c = contractAB(a, b);
-	auto end = std::chrono::high_resolution_clock::now();
+	cudaStream_t stream;
+	cudaStreamCreate(&stream);
+	cutensorHandle_t handle;
+	cutensorCreate(&handle);
+        Index a(3), b(2), c(2);
+        Tensor A{std::vector<Index>{a, b}};
+        auto ptr = A.getHostPtr();
+        for (int i = 0; i < A.getElements(); i++)
+        {
+                ptr[i] = i;
+        }
 	
-	std::cout << c;
-	std::cout << '\n' <<  std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-	
-	
-	Tensor e = contractAB(a, b);
-	
-	auto start2 = std::chrono::high_resolution_clock::now();
-	auto[x, y] = lSVD(e, 1);
-	auto end2 = std::chrono::high_resolution_clock::now();
-	std::cout << "\n" << e << "\n";
-	std::cout << x << "\n" << y;
-	std::cout << '\n' <<  std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+        Tensor B{std::vector<Index>{b, c}};
+	auto ptr2 = B.getHostPtr();
+        for (int i = 0; i < B.getElements(); i++)
+        {
+                ptr2[i] = i + 5;
+        }
+        
+	Tensor C = contractAB(A, B, handle, stream);
+        for (int i = 0; i < C.getElements(); i++)
+        {
+                std::cout << C.getHostPtr()[i] << " ";
+        }
 
-	return 0;	
+        return 0;
 }
-

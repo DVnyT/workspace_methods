@@ -1,7 +1,14 @@
 #pragma once
 #include "CudaUtils.hpp"
+#include <array>
+#include <deque>
+#include <future>
+#include <mutex>
+#include <vector>
 
 extern int leastPriority, greatestPriority;
+constexpr size_t handleSize = 4;
+
 
 struct CutensorHandle
 {
@@ -55,11 +62,6 @@ struct CublasHandle
         operator cublasHandle_t() const noexcept { return m_handle; }
 };
 
-class HandlePool
-{
-
-};
-
 struct CudaStream
 {
         cudaStream_t m_stream;
@@ -71,10 +73,21 @@ struct CudaStream
 
 class StreamPool
 {
-        StreamPool();
+	static std::deque<CudaStream> m_streamQ;
+	
+	std::array<CutensorHandle, handleSize> m_cutensorHandlePool;
+	std::array<CusolverHandle, handleSize> m_cusolverHandlePool;
+	std::array<CublasHandle, handleSize> m_cublasHandlePool;
+	
+	std::mutex m_mtx;
+	StreamPool();
+	~StreamPool();
+	
+	CudaStream acquire();
+	void putBack();
 };
 
 class MemoryPool
 {
-
+	std::array<void*, 1024> m_pinnedMemPool;
 };

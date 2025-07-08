@@ -10,15 +10,18 @@ CutensorHandle::CutensorHandle()
 }
 CutensorHandle::~CutensorHandle()
 {
-        HANDLE_CUTENSOR_ERROR(cutensorDestroy(m_handle));
+        if (m_handle)
+        {
+                HANDLE_CUTENSOR_ERROR(cutensorDestroy(m_handle));
+        }
 }
 
 // Allow moves
-CutensorHandle::CutensorHandle(CutensorHandle &&other) noexcept : m_handle(other.m_handle)
+CutensorHandle::CutensorHandle(CutensorHandle&& other) noexcept : m_handle(other.m_handle)
 {
         other.m_handle = static_cast<decltype(m_handle)>(nullptr);
 }
-CutensorHandle& CutensorHandle::operator=(CutensorHandle &&other) noexcept
+CutensorHandle& CutensorHandle::operator=(CutensorHandle&& other) noexcept
 {
         if (this != &other)
         {
@@ -32,7 +35,7 @@ CutensorHandle& CutensorHandle::operator=(CutensorHandle &&other) noexcept
 
 // Implicit conversion to raw handle when passed.
 // CutensorHandle hand;
-// func(hand); works the same as func(hand.m_handle);
+// func(hand); works the same as func(hand.m_handle);https://youtu.be/fI37vkF8lP4?si=T6JJ5Xzc_a3dSQmb
 
 CusolverHandle::CusolverHandle()
 {
@@ -43,11 +46,11 @@ CusolverHandle::~CusolverHandle()
         HANDLE_CUSOLVER_ERROR(cusolverDnDestroy(m_handle));
 }
 
-CusolverHandle::CusolverHandle(CusolverHandle &&other) noexcept : m_handle(other.m_handle)
+CusolverHandle::CusolverHandle(CusolverHandle&& other) noexcept : m_handle(other.m_handle)
 {
         other.m_handle = static_cast<decltype(m_handle)>(nullptr);
 }
-CusolverHandle& CusolverHandle::operator=(CusolverHandle &&other) noexcept
+CusolverHandle& CusolverHandle::operator=(CusolverHandle&& other) noexcept
 {
         if (this != &other)
         {
@@ -59,7 +62,6 @@ CusolverHandle& CusolverHandle::operator=(CusolverHandle &&other) noexcept
         return *this;
 }
 
-
 CublasHandle::CublasHandle()
 {
         HANDLE_CUBLAS_ERROR(cublasCreate_v2(&m_handle));
@@ -69,11 +71,11 @@ CublasHandle::~CublasHandle()
         HANDLE_CUBLAS_ERROR(cublasDestroy_v2(m_handle));
 }
 
-CublasHandle::CublasHandle(CublasHandle &&other) noexcept : m_handle(other.m_handle)
+CublasHandle::CublasHandle(CublasHandle&& other) noexcept : m_handle(other.m_handle)
 {
         other.m_handle = static_cast<decltype(m_handle)>(nullptr);
 }
-CublasHandle& CublasHandle::operator=(CublasHandle &&other) noexcept
+CublasHandle& CublasHandle::operator=(CublasHandle&& other) noexcept
 {
         if (this != &other)
         {
@@ -85,7 +87,16 @@ CublasHandle& CublasHandle::operator=(CublasHandle &&other) noexcept
         return *this;
 }
 
-CudaStream::CudaStream() { HANDLE_CUDA_ERROR(cudaStreamCreate(&m_stream)); }
-CudaStream::~CudaStream() { HANDLE_CUDA_ERROR(cudaStreamDestroy(m_stream)); }
+CudaStream::CudaStream()
+{
+        HANDLE_CUDA_ERROR(cudaStreamCreate(&m_stream));
+}
+CudaStream::~CudaStream()
+{
+        HANDLE_CUDA_ERROR(cudaStreamDestroy(m_stream));
+}
 
-StreamPool::StreamPool() { cudaDeviceGetStreamPriorityRange(&leastPriority, &greatestPriority); }
+StreamPool::StreamPool()
+{
+        cudaDeviceGetStreamPriorityRange(&leastPriority, &greatestPriority);
+}
