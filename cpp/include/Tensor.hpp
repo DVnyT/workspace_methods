@@ -9,6 +9,7 @@
 #include <ostream> // for std::ostream
 #include <tuple>
 #include <vector>
+#include <memory>
 
 #include "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/include/cuda_runtime.h"
 #include "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/include/cusolverDn.h"
@@ -19,6 +20,9 @@ extern const uint32_t kAlignment;
 
 using floatType = float; // NOTE: changes global precision
 using floatTypeCompute = float;
+
+template<auto Fn>
+using  ptrDeleter = std::integral_constant<decltype(Fn), Fn>;
 
 class Tensor
 {
@@ -34,11 +38,13 @@ class Tensor
         size_t m_byteSize{sizeof(floatType)}; // total bytes
 
         // Data on the Host =>
-        std::unique_ptr<floatType, decltype(&cudaFreeHost)> m_pHost{nullptr, cudaFreeHost}; // host coefficients
+	using HostPtr = std::unique_ptr<floatType, ptrDeleter<cudaFreeHost>>;
+        HostPtr m_pHost{nullptr, cudaFreeHost}; // host coefficients
 
         // Data on the Device (GPU) =>
+	using DevicePtr = std::unique_ptr<void, ptrDeleter<cudaFree>>;
+        DevicePtr m_pDevice{nullptr, cudaFree}; // device pointer
         cutensorTensorDescriptor_t m_desc;                                       // cuTENSOR descriptor
-        std::unique_ptr<void, decltype(&cudaFree)> m_pDevice{nullptr, cudaFree}; // device pointer
 
       public:
         // Constructors =>
@@ -132,6 +138,6 @@ void scaleVdOnDevice(floatType* Vd_dev, const floatType* S_dev, int k, int n, cu
 std::pair<Tensor, Tensor> lSVD(Tensor& A, int split, cusolverDnHandle_t handle, cudaStream_t stream);
 std::pair<Tensor, Tensor> rSVD(Tensor& A, int split, cusolverDnHandle_t handle, cudaStream_t stream);
 
-class SiteTensor : public Tensor
-{
-};
+std::pair<Tensor, Tensor> QR(Tensor& A, int split, cusolverDnHandle_t handle, cudaStream_t stream);
+std::pair<Tensor, Tensor> LQ(Tensor& A, int split, cusolverDnHandle_t handle, cudaStream_t stream);
+

@@ -32,6 +32,28 @@ struct CutensorHandle
         operator cutensorHandle_t() const noexcept { return m_handle; }
 };
 
+struct CutensornetHandle
+{
+        cutensornetHandle_t m_handle;
+
+        // Default ctor and dtor
+        CutensornetHandle();
+        ~CutensornetHandle();
+
+        // No copies allowed
+        CutensornetHandle(const CutensornetHandle &) = delete;
+        CutensornetHandle &operator=(const CutensornetHandle &) = delete;
+
+        // Allow moves
+        CutensornetHandle(CutensornetHandle &&other) noexcept;
+        CutensornetHandle &operator=(CutensornetHandle &&other) noexcept;
+
+        // Implicit conversion to raw handle when passed.
+        // CutensorHandle hand;
+        // func(hand); works the same as func(hand.m_handle);
+        operator cutensornetHandle_t() const noexcept { return m_handle; }
+};
+
 struct CusolverHandle
 {
         cusolverDnHandle_t m_handle;

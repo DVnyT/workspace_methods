@@ -47,5 +47,16 @@
                         exit(-1);                                                      \
                 }                                                                      \
         };
+
+#define HANDLE_CUTENSORNET_ERROR(x)                                                                               \
+        {                                                                                                         \
+                const auto err = x;                                                                               \
+                if (err != cudaSuccess)                                                                           \
+                {                                                                                                 \
+                        printf("cuBLAS error %d at %s:%d\n", cutensornetGetErrorString(err), __FILE__, __LINE__); \
+                        exit(-1);                                                                                 \
+                }                                                                                                 \
+        };
+
 cutensorAlgo_t chooseContractionAlgo();
 cutensorPlan_t makeContractionPlan(cutensorOperationDescriptor_t descOp, cutensorHandle_t handle);
