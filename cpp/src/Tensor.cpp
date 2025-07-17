@@ -624,12 +624,12 @@ template <typename T> __global__ void scale_cols_kernel(T* mat, const T* vec, in
                 mat[idx] *= vec[col];
         }
 }
-// For U matrix (m×k) - scale rows
+// For U matrix (m×k) - scale columns 
 void scaleUOnDevice(floatType* U_dev, const floatType* S_dev, int m, int k, cudaStream_t stream)
 {
         dim3 block(32, 32);
         dim3 grid((k + 31) / 32, (m + 31) / 32); // k cols, m rows
-        (scale_rows_kernel<floatType>)<<<grid, block, 0, stream>>>(U_dev, S_dev, m, k);
+        (scale_cols_kernel<floatType>)<<<grid, block, 0, stream>>>(U_dev, S_dev, m, k);
         cudaError_t err = cudaGetLastError();
         if (err != cudaSuccess)
         {
@@ -637,12 +637,12 @@ void scaleUOnDevice(floatType* U_dev, const floatType* S_dev, int m, int k, cuda
         }
 }
 
-// For Vd matrix (k×n) - scale columns
+// For Vd matrix (k×n) - scale rows
 void scaleVdOnDevice(floatType* Vd_dev, const floatType* S_dev, int k, int n, cudaStream_t stream)
 {
         dim3 block(32, 32);
         dim3 grid((n + 31) / 32, (k + 31) / 32); // n cols, k rows
-        scale_cols_kernel<floatType><<<grid, block, 0, stream>>>(Vd_dev, S_dev, k, n);
+        scale_rows_kernel<floatType><<<grid, block, 0, stream>>>(Vd_dev, S_dev, k, n);
         cudaError_t err = cudaGetLastError();
         if (err != cudaSuccess)
         {
@@ -650,6 +650,7 @@ void scaleVdOnDevice(floatType* Vd_dev, const floatType* S_dev, int k, int n, cu
         }
 }
 
+// TODO: Change the main handle to Cutensornet and do SVDs with it. Cutensornet handles truncation nicely.
 std::pair<Tensor, Tensor> lSVD(Tensor& A, int split, cusolverDnHandle_t handle, cudaStream_t stream)
 {
         // TODO: Move this stream-setting outside the function.
@@ -737,6 +738,9 @@ std::pair<Tensor, Tensor> lSVD(Tensor& A, int split, cusolverDnHandle_t handle, 
 
 std::pair<Tensor, Tensor> rSVD(Tensor& A, int split, cusolverDnHandle_t handle, cudaStream_t stream)
 {
+        // TODO: Move this stream-setting outside the function.
+        HANDLE_CUSOLVER_ERROR(cusolverDnSetStream(handle, stream));
+
         if (A.getHostPtr() && A.getDevicePtr())
         {
                 A.cpyToDevice(stream);
@@ -794,8 +798,8 @@ std::pair<Tensor, Tensor> rSVD(Tensor& A, int split, cusolverDnHandle_t handle, 
             &lwork, gesvdj_params));
 
         floatType* workDevice = nullptr;
-        HANDLE_CUDA_ERROR(cudaMalloc(reinterpret_cast<void**>(&workDevice), sizeof(floatType) * lwork));
-        HANDLE_CUDA_ERROR(cudaStreamSynchronize(stream));
+        HANDLE_CUDA_ERROR(cudaMallocAsync(reinterpret_cast<void**>(&workDevice), sizeof(floatType) * lwork, stream));
+
         HANDLE_CUSOLVER_ERROR(cusolverDnSgesvdj(
             handle, CUSOLVER_EIG_MODE_VECTOR, 1, m, n, reinterpret_cast<floatType*>(A.getDevicePtr()), m,
             reinterpret_cast<floatType*>(SpDevice), reinterpret_cast<floatType*>(U.getDevicePtr()), m,
